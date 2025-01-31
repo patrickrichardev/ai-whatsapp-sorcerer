@@ -1,4 +1,5 @@
-import { Home, Plus, MessageSquare, Settings } from "lucide-react";
+3,
+  import { Home, Plus, MessageSquare, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
@@ -6,7 +7,7 @@ const Sidebar = () => {
     <div className="w-64 h-screen fixed left-0 top-0 bg-black/20 border-r border-white/10 p-4">
       <div className="flex items-center gap-2 px-4 mb-8">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500" />
-        <img src="public/elia.jpg" />
+        <img src="elia.jpg" />
       </div>
       
       <nav className="space-y-2">
