@@ -5,16 +5,16 @@ import { QrCode, Smartphone } from "lucide-react";
 const ConnectWhatsApp = () => {
   return (
     <div className="animate-fadeIn max-w-2xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8">Connect WhatsApp</h1>
+      <h1 className="text-4xl font-bold mb-8">Conectar Whatsapp</h1>
       
       <Card className="glass-card p-8 text-center">
         <div className="mb-6">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Smartphone className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-2xl font-semibold mb-2">Connect Your WhatsApp</h2>
+          <h2 className="text-2xl font-semibold mb-2">Conectar Seu Whatsapp</h2>
           <p className="text-muted-foreground mb-6">
-            Scan the QR code with WhatsApp to connect your account
+            Escaneie o código QR com o WhatsApp para conectar sua conta
           </p>
         </div>
 
@@ -23,7 +23,7 @@ const ConnectWhatsApp = () => {
         </div>
 
         <Button variant="outline" className="mx-auto">
-          Refresh QR Code
+          Atualizar QR Code
         </Button>
       </Card>
     </div>
