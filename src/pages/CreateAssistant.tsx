@@ -17,37 +17,37 @@ const CreateAssistant = () => {
 
   return (
     <div className="animate-fadeIn max-w-2xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8">Create Assistant</h1>
+      <h1 className="text-4xl font-bold mb-8">Criar Agente</h1>
       
       <Card className="glass-card p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Assistant Name</Label>
-            <Input id="name" placeholder="e.g., Customer Support Bot" />
+            <Label htmlFor="name">Nome do Agente</Label>
+            <Input id="name" placeholder="Ex: Amanda" />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Descrição</Label>
             <Textarea 
               id="description" 
-              placeholder="Describe what your assistant does..."
+              placeholder="Descreva o que seu agente faz..."
               className="resize-none"
               rows={3}
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="prompt">System Prompt</Label>
+            <Label htmlFor="prompt">Prompt do Agente</Label>
             <Textarea 
               id="prompt" 
-              placeholder="Define your assistant's personality and behavior..."
+              placeholder="Defina a personalidade do agente e coloque todas as informações..."
               className="resize-none"
               rows={5}
             />
           </div>
           
           <div className="space-y-2">
-            <Label>Temperature: {temperature}</Label>
+            <Label>Temperatura: {temperature}</Label>
             <Slider
               value={temperature}
               onValueChange={setTemperature}
@@ -56,12 +56,12 @@ const CreateAssistant = () => {
               className="w-full"
             />
             <p className="text-sm text-muted-foreground">
-              Higher values make the output more random, lower values make it more focused.
+              Valores mais altos tornam a resposta do agente mais aleatória, valores mais baixos a tornam mais focada.
             </p>
           </div>
           
           <Button type="submit" className="w-full">
-            Create Assistant
+            Criar Agente
           </Button>
         </form>
       </Card>
