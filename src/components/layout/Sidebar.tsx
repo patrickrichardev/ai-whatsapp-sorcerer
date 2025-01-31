@@ -12,19 +12,19 @@ const Sidebar = () => {
       <nav className="space-y-2">
         <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Home size={20} />
-          Dashboard
+          Painel de Controle
         </NavLink>
         <NavLink to="/create" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Plus size={20} />
-          Create Assistant
+          Criar Agente
         </NavLink>
         <NavLink to="/connect" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <MessageSquare size={20} />
-          WhatsApp Connect
+         Conectar Whatsapp
         </NavLink>
         <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Settings size={20} />
-          Settings
+          Configurações
         </NavLink>
       </nav>
     </div>
