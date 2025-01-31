@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 
+// Verificação das variáveis de ambiente
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  throw new Error("Supabase URL and Anon Key are required. Please connect your project to Supabase.");
+}
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
