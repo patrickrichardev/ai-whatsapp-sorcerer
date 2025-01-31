@@ -7,6 +7,7 @@ const Sidebar = () => {
       <div className="flex items-center gap-2 px-4 mb-8">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500" />
         <h1 className="text-xl font-bold">AI Assistant</h1>
+        <img src="images/elia.jpg" />
       </div>
       
       <nav className="space-y-2">
