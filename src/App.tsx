@@ -1,29 +1,25 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import Layout from "./components/layout/Layout";
-import Index from "./pages/Index";
-import CreateAssistant from "./pages/CreateAssistant";
-import ConnectWhatsApp from "./pages/ConnectWhatsApp";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import Layout from "./components/layout/Layout"
+import Index from "./pages/Index"
+import CreateAssistant from "./pages/CreateAssistant"
+import ConnectWhatsApp from "./pages/ConnectWhatsApp"
+import Settings from "./pages/Settings"
+import NotFound from "./pages/NotFound"
 
-const queryClient = new QueryClient();
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Index />} />
+          <Route path="create-assistant" element={<CreateAssistant />} />
+          <Route path="connect-whatsapp" element={<ConnectWhatsApp />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </Router>
+  )
+}
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/create" element={<CreateAssistant />} />
-            <Route path="/connect" element={<ConnectWhatsApp />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+export default App
