@@ -14,11 +14,11 @@ const Sidebar = () => {
           <Home size={20} />
           Painel de Controle
         </NavLink>
-        <NavLink to="/create" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+        <NavLink to="/create-assistant" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Plus size={20} />
           Criar Agente
         </NavLink>
-        <NavLink to="/connect" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+        <NavLink to="/connect-whatsapp" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <MessageSquare size={20} />
          Conectar Whatsapp
         </NavLink>
