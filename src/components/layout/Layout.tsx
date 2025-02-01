@@ -1,16 +1,13 @@
+import { Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import Sidebar from "./Sidebar";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
       <main className="pl-64 p-8">
-        {children}
+        <Outlet />
       </main>
       <Toaster />
     </div>

@@ -10,7 +10,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="create-assistant" element={<CreateAssistant />} />
           <Route path="connect-whatsapp" element={<ConnectWhatsApp />} />
