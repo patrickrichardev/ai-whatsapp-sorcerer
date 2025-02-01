@@ -1,5 +1,4 @@
-3,
-  import { Home, Plus, MessageSquare, Settings } from "lucide-react";
+import { Home, Plus, MessageSquare, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
