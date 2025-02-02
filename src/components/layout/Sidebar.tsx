@@ -46,35 +46,35 @@ export default function Sidebar() {
   ]
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex h-[60px] items-center px-6">
-        <img src="/elia.png" alt="Logo" className="h-8 w-auto" />
+    <div className="flex h-full flex-col gap-6">
+      <div className="flex h-[80px] items-center justify-center px-6">
+        <img src="/elia.png" alt="Logo" className="h-12 w-auto" />
       </div>
 
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-2 px-4">
         {navigation.map((item) => (
           <Link key={item.name} to={item.href}>
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start gap-3",
+                "w-full justify-start gap-3 text-lg py-6",
                 item.current && "bg-accent"
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-6 w-6" />
               {item.name}
             </Button>
           </Link>
         ))}
       </nav>
 
-      <div className="p-3">
+      <div className="p-4">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-destructive hover:text-destructive"
+          className="w-full justify-start gap-3 text-lg py-6 text-destructive hover:text-destructive"
           onClick={signOut}
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-6 w-6" />
           Sair
         </Button>
       </div>
