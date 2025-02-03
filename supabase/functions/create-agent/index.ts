@@ -24,7 +24,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           { 
             role: 'system', 
@@ -36,7 +36,14 @@ serve(async (req) => {
       }),
     })
 
+    if (!openAIResponse.ok) {
+      console.error('OpenAI API Error:', await openAIResponse.text())
+      throw new Error('Failed to validate prompt with OpenAI')
+    }
+
     const openAIData = await openAIResponse.json()
+    console.log('OpenAI Response:', openAIData)
+    
     const isValidPrompt = openAIData.choices[0].message.content.toLowerCase().includes('valid')
 
     if (!isValidPrompt) {
@@ -62,7 +69,10 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Error:', error)
+      throw error
+    }
 
     return new Response(
       JSON.stringify({ agent }),
