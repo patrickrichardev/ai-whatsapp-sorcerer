@@ -1,35 +1,8 @@
-project_id = "nlnweixrdzulgoyorasz"
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
-
-[db]
-port = 54322
-
-[studio]
-enabled = true
-port = 54323
-
-[inbucket]
-enabled = true
-port = 54324
-
-[storage]
-enabled = true
-
-[auth]
-enabled = true
-site_url = "http://localhost:3000"
-
-[analytics]
-enabled = false
-
-[[functions]]
 [functions.create-checkout-session]
 verify_jwt = true
 
-[[functions]]
 [functions.check-subscription]
 verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
