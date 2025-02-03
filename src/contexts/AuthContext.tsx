@@ -21,50 +21,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
 
   useEffect(() => {
+    // Primeiro, obtemos a sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Session loaded:", session)
+      console.log("Initial session loaded:", session)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
+    // Depois, configuramos o listener para mudanças de estado
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", session)
+      console.log("Auth state changed:", _event, session)
       setSession(session)
       setUser(session?.user ?? null)
+      
+      // Se o usuário fez login, redireciona para a página inicial
+      if (session?.user && window.location.pathname === '/login') {
+        navigate('/')
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [navigate])
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({
+      setLoading(true)
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) throw error
 
-      console.log("Login successful:", data)
-      navigate("/")
       toast.success("Login realizado com sucesso!")
     } catch (error) {
       console.error("Error signing in:", error)
       toast.error("Erro ao fazer login. Verifique suas credenciais.")
+    } finally {
+      setLoading(false)
     }
   }
 
   const signOut = async () => {
     try {
+      setLoading(true)
       await supabase.auth.signOut()
       navigate("/login")
       toast.success("Logout realizado com sucesso!")
     } catch (error) {
       console.error("Error signing out:", error)
       toast.error("Erro ao fazer logout.")
+    } finally {
+      setLoading(false)
     }
   }
 
