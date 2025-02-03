@@ -9,6 +9,77 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_connections: {
+        Row: {
+          agent_id: string
+          connection_data: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          platform: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          connection_data?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          platform: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          connection_data?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          platform?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_connections_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          prompt: string
+          temperature: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          prompt: string
+          temperature?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          prompt?: string
+          temperature?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string | null
