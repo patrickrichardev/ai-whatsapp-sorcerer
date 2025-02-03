@@ -27,9 +27,9 @@ site_url = "http://localhost:3000"
 enabled = false
 
 [[functions]]
-name = "create-checkout-session"
+[functions.create-checkout-session]
 verify_jwt = true
 
 [[functions]]
-name = "check-subscription"
+[functions.check-subscription]
 verify_jwt = true
