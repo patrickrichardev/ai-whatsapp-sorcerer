@@ -1,33 +1,55 @@
 import { Card } from "@/components/ui/card";
 import { Bot, MessageSquare, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const { data: agents, isLoading } = useQuery({
-    queryKey: ["agents"],
+  const { user } = useAuth();
+
+  const { data: agents, isLoading, error } = useQuery({
+    queryKey: ["agents", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("Usuário não autenticado");
+      
       const { data, error } = await supabase
         .from("agents")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar agentes:", error);
+        throw error;
+      }
+      
       return data;
     },
+    enabled: !!user, // Só executa a query quando houver um usuário autenticado
   });
+
+  if (error) {
+    console.error("Erro na query:", error);
+    return (
+      <div className="animate-fadeIn">
+        <h1 className="text-4xl font-bold mb-8">Painel de Controle</h1>
+        <div className="text-center text-red-500">
+          Erro ao carregar dados. Por favor, tente novamente.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fadeIn">
       <h1 className="text-4xl font-bold mb-8">Painel de Controle</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="glass-card p-6">
+
+      <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-primary/10">
+            <div className="p-2 bg-primary/10 rounded-full">
               <Bot className="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -36,10 +58,10 @@ const Index = () => {
             </div>
           </div>
         </Card>
-        
-        <Card className="glass-card p-6">
+
+        <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-primary/10">
+            <div className="p-2 bg-primary/10 rounded-full">
               <MessageSquare className="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -48,21 +70,21 @@ const Index = () => {
             </div>
           </div>
         </Card>
-        
-        <Card className="glass-card p-6">
+
+        <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-primary/10">
+            <div className="p-2 bg-primary/10 rounded-full">
               <Users className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Usuários Ativos</p>
+              <p className="text-sm text-muted-foreground">Total de Usuários</p>
               <h3 className="text-2xl font-bold">0</h3>
             </div>
           </div>
         </Card>
       </div>
 
-      <Card className="glass-card p-6">
+      <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Atividade Recente</h2>
         {isLoading ? (
           <div className="text-center text-muted-foreground py-8">
