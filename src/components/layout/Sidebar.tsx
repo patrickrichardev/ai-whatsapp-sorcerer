@@ -32,7 +32,7 @@ export default function Sidebar() {
       current: isCurrentPath("/create-assistant"),
     },
     {
-      name: "Conectar WhatsApp",
+      name: "Conectar Agente",
       href: "/connect-whatsapp",
       icon: MessageSquare,
       current: isCurrentPath("/connect-whatsapp"),

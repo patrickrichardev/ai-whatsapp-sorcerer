@@ -40,7 +40,7 @@ const ConnectWhatsApp = () => {
 
         {/* Instagram Card */}
         <Card className="p-6 relative">
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
             <Lock className="w-8 h-8 text-muted-foreground" />
           </div>
           <div className="flex flex-col items-center gap-4">
@@ -63,7 +63,7 @@ const ConnectWhatsApp = () => {
 
         {/* Site Card */}
         <Card className="p-6 relative">
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
             <Lock className="w-8 h-8 text-muted-foreground" />
           </div>
           <div className="flex flex-col items-center gap-4">
