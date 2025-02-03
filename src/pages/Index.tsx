@@ -1,37 +1,56 @@
-import { Card } from "@/components/ui/card";
-import { Bot, MessageSquare, Users } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useAuth } from "@/contexts/AuthContext";
+import { Card } from "@/components/ui/card"
+import { Bot, MessageSquare, Users } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/lib/supabase"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { useAuth } from "@/contexts/AuthContext"
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user } = useAuth()
 
-  const { data: agents, isLoading, error } = useQuery({
+  console.log("Index - Current user:", user)
+
+  const {
+    data: agents,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["agents", user?.id],
     queryFn: async () => {
-      if (!user) throw new Error("Usuário não autenticado");
-      
+      if (!user) {
+        console.log("No user found in queryFn")
+        throw new Error("Usuário não autenticado")
+      }
+
+      console.log("Fetching agents for user:", user.id)
       const { data, error } = await supabase
         .from("agents")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
 
       if (error) {
-        console.error("Erro ao buscar agentes:", error);
-        throw error;
+        console.error("Error fetching agents:", error)
+        throw error
       }
-      
-      return data;
+
+      console.log("Agents fetched successfully:", data)
+      return data
     },
-    enabled: !!user, // Só executa a query quando houver um usuário autenticado
-  });
+    enabled: !!user,
+    retry: 1,
+  })
 
   if (error) {
-    console.error("Erro na query:", error);
+    console.error("Query error:", error)
     return (
       <div className="animate-fadeIn">
         <h1 className="text-4xl font-bold mb-8">Painel de Controle</h1>
@@ -39,7 +58,18 @@ const Index = () => {
           Erro ao carregar dados. Por favor, tente novamente.
         </div>
       </div>
-    );
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="animate-fadeIn">
+        <h1 className="text-4xl font-bold mb-8">Painel de Controle</h1>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -86,11 +116,7 @@ const Index = () => {
 
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Atividade Recente</h2>
-        {isLoading ? (
-          <div className="text-center text-muted-foreground py-8">
-            Carregando...
-          </div>
-        ) : agents && agents.length > 0 ? (
+        {agents && agents.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -120,7 +146,7 @@ const Index = () => {
         )}
       </Card>
     </div>
-  );
-};
+  )
+}
 
-export default Index;
+export default Index

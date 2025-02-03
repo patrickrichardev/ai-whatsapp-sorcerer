@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Session loaded:", session)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", session)
       setSession(session)
       setUser(session?.user ?? null)
     })
@@ -39,18 +41,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) throw error
 
+      console.log("Login successful:", data)
       navigate("/")
       toast.success("Login realizado com sucesso!")
     } catch (error) {
-      toast.error("Erro ao fazer login. Verifique suas credenciais.")
       console.error("Error signing in:", error)
+      toast.error("Erro ao fazer login. Verifique suas credenciais.")
     }
   }
 
@@ -60,8 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       navigate("/login")
       toast.success("Logout realizado com sucesso!")
     } catch (error) {
-      toast.error("Erro ao fazer logout.")
       console.error("Error signing out:", error)
+      toast.error("Erro ao fazer logout.")
     }
   }
 

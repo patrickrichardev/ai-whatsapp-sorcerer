@@ -9,6 +9,8 @@ export default function ProtectedRoute({
   const { user, loading } = useAuth()
   const location = useLocation()
 
+  console.log("ProtectedRoute - User:", user, "Loading:", loading)
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -18,6 +20,7 @@ export default function ProtectedRoute({
   }
 
   if (!user) {
+    console.log("No user found, redirecting to login")
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
