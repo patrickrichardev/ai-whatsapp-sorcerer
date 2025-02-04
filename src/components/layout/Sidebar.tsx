@@ -10,40 +10,34 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
+const navigation = [
+  {
+    name: "Dashboard",
+    href: "/",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Criar Assistente",
+    href: "/create-assistant",
+    icon: MessageSquarePlus,
+  },
+  {
+    name: "Conectar Agente",
+    href: "/connect-whatsapp",
+    icon: MessageSquare,
+  },
+  {
+    name: "Configurações",
+    href: "/settings",
+    icon: Settings,
+  },
+]
+
 export default function Sidebar() {
   const location = useLocation()
   const { signOut } = useAuth()
 
-  const isCurrentPath = (path: string) => {
-    return location.pathname === path
-  }
-
-  const navigation = [
-    {
-      name: "Dashboard",
-      href: "/",
-      icon: LayoutDashboard,
-      current: isCurrentPath("/"),
-    },
-    {
-      name: "Criar Assistente",
-      href: "/create-assistant",
-      icon: MessageSquarePlus,
-      current: isCurrentPath("/create-assistant"),
-    },
-    {
-      name: "Conectar Agente",
-      href: "/connect-whatsapp",
-      icon: MessageSquare,
-      current: isCurrentPath("/connect-whatsapp"),
-    },
-    {
-      name: "Configurações",
-      href: "/settings",
-      icon: Settings,
-      current: isCurrentPath("/settings"),
-    },
-  ]
+  const isCurrentPath = (path: string) => location.pathname === path
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -57,11 +51,11 @@ export default function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start gap-3 text-lg py-6",
-                item.current && "bg-accent"
+                "w-full justify-start gap-3 text-base py-6",
+                isCurrentPath(item.href) && "bg-accent"
               )}
             >
-              <item.icon className="h-6 w-6" />
+              <item.icon className="h-5 w-5" />
               {item.name}
             </Button>
           </Link>
@@ -71,10 +65,10 @@ export default function Sidebar() {
       <div className="p-4">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-lg py-6 text-destructive hover:text-destructive"
+          className="w-full justify-start gap-3 text-base py-6 text-destructive hover:text-destructive"
           onClick={signOut}
         >
-          <LogOut className="h-6 w-6" />
+          <LogOut className="h-5 w-5" />
           Sair
         </Button>
       </div>

@@ -1,20 +1,25 @@
-import { Outlet } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import Sidebar from "./Sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Outlet } from "react-router-dom"
+import { Toaster } from "@/components/ui/sonner"
+import Sidebar from "./Sidebar"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const Layout = () => {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile()
 
   return (
     <div className="min-h-screen bg-background">
       {isMobile ? (
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="fixed top-4 left-4 z-50"
+              aria-label="Menu"
+            >
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
@@ -27,12 +32,12 @@ const Layout = () => {
           <Sidebar />
         </div>
       )}
-      <main className={`${isMobile ? 'px-4 pt-16' : 'pl-72'} p-8 transition-all duration-200`}>
+      <main className={`${isMobile ? 'px-4 pt-16' : 'pl-72'} p-8 transition-all duration-200 max-w-7xl mx-auto`}>
         <Outlet />
       </main>
       <Toaster />
     </div>
-  );
-};
+  )
+}
 
-export default Layout;
+export default Layout

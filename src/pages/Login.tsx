@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/AuthContext"
 import { useState } from "react"
-import { Link } from "react-router-dom"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -67,21 +66,6 @@ export default function Login() {
                 Entrar
               </Button>
             </form>
-
-            <div className="mt-4 flex flex-col space-y-2">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-primary hover:underline text-center"
-              >
-                Esqueci minha senha
-              </Link>
-              <Link
-                to="/register"
-                className="text-sm text-primary hover:underline text-center"
-              >
-                Criar conta
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -21,23 +21,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Primeiro, obtemos a sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session loaded:", session)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Depois, configuramos o listener para mudanças de estado
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session)
       setSession(session)
       setUser(session?.user ?? null)
       
-      // Se o usuário fez login, redireciona para a página inicial
       if (session?.user && window.location.pathname === '/login') {
         navigate('/')
       }

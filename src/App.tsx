@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Layout from "./components/layout/Layout"
 import Index from "./pages/Index"
 import CreateAssistant from "./pages/CreateAssistant"
-import SelectAgent from "./pages/SelectAgent"
 import ConnectWhatsApp from "./pages/ConnectWhatsApp"
 import WhatsAppQR from "./pages/WhatsAppQR"
 import Settings from "./pages/Settings"
@@ -26,7 +25,6 @@ function App() {
           >
             <Route index element={<Index />} />
             <Route path="create-assistant" element={<CreateAssistant />} />
-            <Route path="select-agent" element={<SelectAgent />} />
             <Route path="connect-whatsapp" element={<ConnectWhatsApp />} />
             <Route path="connect-whatsapp/qr" element={<WhatsAppQR />} />
             <Route path="settings" element={<Settings />} />
