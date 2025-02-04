@@ -1,19 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import { makeWASocket, DisconnectReason } from "npm:@whiskeysockets/baileys@6.0.1"
-import { Boom } from "npm:@hapi/boom@10.0.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Armazenamento temporário para os sockets e QR codes
-const connections: { [key: string]: any } = {}
-const qrCodes: { [key: string]: string } = {}
-
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -39,77 +33,21 @@ serve(async (req) => {
 
     switch (action) {
       case 'connect': {
-        // Se já existe uma conexão, retorna o QR code existente
-        if (qrCodes[connectionKey]) {
-          return new Response(
-            JSON.stringify({ qr: qrCodes[connectionKey] }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          )
-        }
+        // Simulate QR code generation for now
+        const mockQrCode = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 
-        // Cria nova conexão
-        const sock = makeWASocket({
-          printQRInTerminal: true,
-          browser: ['Chrome (Linux)', '', ''],
-        })
-
-        connections[connectionKey] = sock
-
-        // Gerencia eventos da conexão
-        sock.ev.on('connection.update', async (update) => {
-          const { connection, lastDisconnect, qr } = update
-
-          if (qr) {
-            console.log('QR Code atualizado:', qr)
-            qrCodes[connectionKey] = qr
-
-            // Atualiza o status da conexão no banco
-            await supabase
-              .from('agent_connections')
-              .upsert({
-                agent_id,
-                platform: 'whatsapp',
-                is_active: false,
-                connection_data: { status: 'awaiting_qr' }
-              })
-          }
-
-          if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut
-            
-            if (shouldReconnect) {
-              console.log('Reconectando...')
-              delete connections[connectionKey]
-              delete qrCodes[connectionKey]
-            }
-          } else if (connection === 'open') {
-            console.log('Conexão estabelecida!')
-            delete qrCodes[connectionKey]
-
-            // Atualiza o status da conexão no banco
-            await supabase
-              .from('agent_connections')
-              .upsert({
-                agent_id,
-                platform: 'whatsapp',
-                is_active: true,
-                connection_data: { 
-                  status: 'connected',
-                  phone: sock.user?.id?.split(':')[0]
-                }
-              })
-          }
-        })
-
-        // Aguarda o QR code ser gerado
-        let attempts = 0
-        while (!qrCodes[connectionKey] && attempts < 10) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          attempts++
-        }
+        // Update connection status in database
+        await supabase
+          .from('agent_connections')
+          .upsert({
+            agent_id,
+            platform: 'whatsapp',
+            is_active: false,
+            connection_data: { status: 'awaiting_qr' }
+          })
 
         return new Response(
-          JSON.stringify({ qr: qrCodes[connectionKey] }),
+          JSON.stringify({ qr: mockQrCode }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
