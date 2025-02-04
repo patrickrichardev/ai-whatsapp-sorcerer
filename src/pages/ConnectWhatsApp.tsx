@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Instagram, Lock, MessageSquare, Globe } from "lucide-react"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
@@ -8,55 +8,53 @@ import { supabase } from "@/lib/supabase"
 
 const ConnectWhatsApp = () => {
   const navigate = useNavigate()
-  const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([])
-  const [loading, setLoading] = useState(true)
+  const [searchParams] = useSearchParams()
+  const agentId = searchParams.get("agent_id")
+  const [agentName, setAgentName] = useState<string>("")
 
   useEffect(() => {
-    const fetchAgents = async () => {
+    if (!agentId) {
+      navigate("/select-agent")
+      return
+    }
+
+    const fetchAgent = async () => {
       try {
         const { data, error } = await supabase
           .from("agents")
-          .select("id, name")
+          .select("name")
+          .eq("id", agentId)
+          .single()
         
         if (error) throw error
         
-        setAgents(data || [])
+        setAgentName(data.name)
       } catch (error) {
-        console.error("Error fetching agents:", error)
-        toast.error("Erro ao carregar agentes")
-      } finally {
-        setLoading(false)
+        console.error("Error fetching agent:", error)
+        toast.error("Erro ao carregar informações do agente")
+        navigate("/select-agent")
       }
     }
 
-    fetchAgents()
-  }, [])
+    fetchAgent()
+  }, [agentId, navigate])
 
   const handleLockedPlatform = () => {
     toast.info("Esta plataforma estará disponível em breve!")
   }
 
-  const handleWhatsAppConnect = async () => {
-    if (agents.length === 0) {
-      toast.error("Você precisa criar um agente primeiro!")
-      navigate("/create-assistant")
-      return
-    }
-
-    // Se houver apenas um agente, use-o diretamente
-    if (agents.length === 1) {
-      navigate(`/connect-whatsapp/qr?agent_id=${agents[0].id}`)
-      return
-    }
-
-    // Se houver múltiplos agentes, mostre um toast informativo
-    // Em uma implementação futura, poderíamos adicionar um modal de seleção
-    toast.error("Por favor, selecione um agente para conectar")
+  const handleWhatsAppConnect = () => {
+    navigate(`/connect-whatsapp/qr?agent_id=${agentId}`)
   }
+
+  if (!agentId) return null
 
   return (
     <div className="animate-fadeIn max-w-4xl mx-auto">
       <h1 className="text-4xl font-bold mb-8">Conectar Agente</h1>
+      <p className="text-muted-foreground mb-2">
+        Agente selecionado: <span className="font-medium">{agentName}</span>
+      </p>
       <p className="text-muted-foreground mb-8">
         Selecione a plataforma que você deseja conectar seu agente
       </p>
@@ -75,7 +73,6 @@ const ConnectWhatsApp = () => {
             <Button 
               className="w-full mt-4"
               onClick={handleWhatsAppConnect}
-              disabled={loading}
             >
               Conectar
             </Button>
