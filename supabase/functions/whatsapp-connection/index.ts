@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { makeWASocket, useMultiFileAuthState, Browsers } from "npm:@whiskeysockets/baileys@6.5.0"
+import { makeWASocket, useMultiFileAuthState } from "npm:@adiwajshing/baileys@4.4.0"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import { Boom } from "npm:@hapi/boom@10.0.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,7 +52,7 @@ serve(async (req) => {
         const sock = makeWASocket({
           auth: state,
           printQRInTerminal: true,
-          browser: Browsers.ubuntu('Chrome'),
+          browser: ['Chrome (Linux)', '', ''],
         })
 
         connections[connectionKey] = sock
@@ -78,7 +77,8 @@ serve(async (req) => {
           }
 
           if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== 405
+            const statusCode = (lastDisconnect?.error as any)?.output?.statusCode
+            const shouldReconnect = statusCode !== 401 && statusCode !== 408
             
             if (shouldReconnect) {
               console.log('Reconectando...')
