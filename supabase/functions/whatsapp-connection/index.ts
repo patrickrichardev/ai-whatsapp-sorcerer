@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason } from "npm:@whiskeysockets/baileys"
+import { makeWASocket, useMultiFileAuthState, Browsers } from "npm:@whiskeysockets/baileys@6.5.0"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import { Boom } from "npm:@hapi/boom"
+import { Boom } from "npm:@hapi/boom@10.0.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -78,7 +78,7 @@ serve(async (req) => {
           }
 
           if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut
+            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== 405
             
             if (shouldReconnect) {
               console.log('Reconectando...')
