@@ -80,10 +80,48 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
+      subscription_plans: {
         Row: {
           created_at: string | null
           id: string
+          max_agents: number
+          monthly_credits: number
+          name: string
+          plan_type: Database["public"]["Enums"]["subscription_plan_type"]
+          stripe_price_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_agents: number
+          monthly_credits: number
+          name: string
+          plan_type: Database["public"]["Enums"]["subscription_plan_type"]
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_agents?: number
+          monthly_credits?: number
+          name?: string
+          plan_type?: Database["public"]["Enums"]["subscription_plan_type"]
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          credits_reset_at: string | null
+          credits_used: number | null
+          id: string
+          plan_type:
+            | Database["public"]["Enums"]["subscription_plan_type"]
+            | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -92,7 +130,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          credits_reset_at?: string | null
+          credits_used?: number | null
           id?: string
+          plan_type?:
+            | Database["public"]["Enums"]["subscription_plan_type"]
+            | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -101,7 +144,12 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          credits_reset_at?: string | null
+          credits_used?: number | null
           id?: string
+          plan_type?:
+            | Database["public"]["Enums"]["subscription_plan_type"]
+            | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -118,7 +166,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_plan_type: "basic" | "pro" | "enterprise"
     }
     CompositeTypes: {
       [_ in never]: never
