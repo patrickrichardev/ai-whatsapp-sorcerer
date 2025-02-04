@@ -1,6 +1,8 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,11 +18,13 @@ serve(async (req) => {
   try {
     const { name, description, prompt, temperature, user_id } = await req.json()
 
-    // Validate the OpenAI prompt first
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Creating agent with:', { name, description, prompt, temperature, user_id })
+
+    // First, validate the prompt with OpenAI
+    const validationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -36,19 +40,45 @@ serve(async (req) => {
       }),
     })
 
-    if (!openAIResponse.ok) {
-      console.error('OpenAI API Error:', await openAIResponse.text())
+    if (!validationResponse.ok) {
+      console.error('OpenAI Validation Error:', await validationResponse.text())
       throw new Error('Failed to validate prompt with OpenAI')
     }
 
-    const openAIData = await openAIResponse.json()
-    console.log('OpenAI Response:', openAIData)
+    const validationData = await validationResponse.json()
+    console.log('Validation Response:', validationData)
     
-    const isValidPrompt = openAIData.choices[0].message.content.toLowerCase().includes('valid')
+    const isValidPrompt = validationData.choices[0].message.content.toLowerCase().includes('valid')
 
     if (!isValidPrompt) {
       throw new Error('Invalid prompt structure')
     }
+
+    // Create OpenAI Assistant
+    console.log('Creating OpenAI Assistant...')
+    const assistantResponse = await fetch('https://api.openai.com/v1/assistants', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v1'
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        instructions: prompt,
+        model: "gpt-4o-mini",
+        tools: [{ type: "code_interpreter" }]
+      })
+    })
+
+    if (!assistantResponse.ok) {
+      console.error('OpenAI Assistant Creation Error:', await assistantResponse.text())
+      throw new Error('Failed to create OpenAI Assistant')
+    }
+
+    const assistant = await assistantResponse.json()
+    console.log('OpenAI Assistant created:', assistant)
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -56,7 +86,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Insert the agent into the database
+    // Insert the agent into the database with the OpenAI Assistant ID
     const { data: agent, error } = await supabaseClient
       .from('agents')
       .insert({
@@ -64,7 +94,8 @@ serve(async (req) => {
         description,
         prompt,
         temperature,
-        user_id
+        user_id,
+        openai_assistant_id: assistant.id // Store the OpenAI Assistant ID
       })
       .select()
       .single()
