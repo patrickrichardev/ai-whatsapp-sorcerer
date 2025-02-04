@@ -9,28 +9,52 @@ import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const AGENT_TEMPLATES = {
+  custom: {
+    name: "",
+    description: "",
+    prompt: "",
+    temperature: 0.7,
+  },
+  sales: {
+    name: "Vendedor",
+    description: "Agente especializado em vendas e conversão de leads",
+    prompt: "Você é um vendedor profissional especializado em converter leads em clientes. Você deve ser amigável, persuasivo e focado em entender as necessidades do cliente para oferecer as melhores soluções. Mantenha um tom profissional mas acolhedor, e sempre busque identificar oportunidades de venda sem ser invasivo. Use técnicas de vendas consultivas e foque em construir relacionamentos duradouros com os clientes.",
+    temperature: 0.8,
+  },
+  support: {
+    name: "Suporte",
+    description: "Agente especializado em atendimento ao cliente e suporte técnico",
+    prompt: "Você é um agente de suporte técnico especializado em resolver problemas e auxiliar clientes. Seja sempre paciente, claro e empático nas suas respostas. Seu objetivo é ajudar os usuários a resolverem seus problemas da forma mais eficiente possível, mantendo um tom profissional e amigável. Forneça instruções passo a passo quando necessário e sempre confirme se o problema foi resolvido.",
+    temperature: 0.6,
+  },
+}
 
 const CreateAssistant = () => {
   const [temperature, setTemperature] = useState([0.7])
   const [isLoading, setIsLoading] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [formData, setFormData] = useState(AGENT_TEMPLATES.custom)
+
+  const handleTemplateChange = (value: string) => {
+    const template = AGENT_TEMPLATES[value as keyof typeof AGENT_TEMPLATES]
+    setFormData(template)
+    setTemperature([template.temperature])
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const formData = new FormData(e.currentTarget)
-      const name = formData.get('name') as string
-      const description = formData.get('description') as string
-      const prompt = formData.get('prompt') as string
-
       const { data, error } = await supabase.functions.invoke('create-agent', {
         body: {
-          name,
-          description,
-          prompt,
+          name: formData.name,
+          description: formData.description,
+          prompt: formData.prompt,
           temperature: temperature[0],
           user_id: user?.id
         }
@@ -55,12 +79,28 @@ const CreateAssistant = () => {
       <Card className="glass-card p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
+            <Label>Modelo de Agente</Label>
+            <Select onValueChange={handleTemplateChange} defaultValue="custom">
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um modelo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custom">Personalizado</SelectItem>
+                <SelectItem value="sales">Vendedor</SelectItem>
+                <SelectItem value="support">Suporte</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="name">Nome do Agente</Label>
             <Input 
               id="name" 
               name="name" 
               placeholder="Ex: Amanda" 
               required 
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             />
           </div>
           
@@ -72,6 +112,8 @@ const CreateAssistant = () => {
               placeholder="Descreva o que seu agente faz..."
               className="resize-none"
               rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
           
@@ -84,6 +126,8 @@ const CreateAssistant = () => {
               className="resize-none"
               rows={5}
               required
+              value={formData.prompt}
+              onChange={(e) => setFormData(prev => ({ ...prev, prompt: e.target.value }))}
             />
           </div>
           
