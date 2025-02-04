@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import { makeWASocket, DisconnectReason } from "npm:@whiskeysockets/baileys@6.5.0"
+import { makeWASocket, DisconnectReason } from "npm:@whiskeysockets/baileys@5.0.0"
 import { Boom } from "npm:@hapi/boom@10.0.1"
-import { Buffer } from "node:buffer"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

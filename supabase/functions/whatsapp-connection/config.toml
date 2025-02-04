@@ -1,1 +1,2 @@
-project_id = "nlnweixrdzulgoyorasz"
+[functions.whatsapp-connection]
+verify_jwt = true
