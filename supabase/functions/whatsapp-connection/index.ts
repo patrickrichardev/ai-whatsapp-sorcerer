@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { makeWASocket, useMultiFileAuthState } from "npm:@adiwajshing/baileys@4.4.0"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+import { makeWASocket, DisconnectReason } from "npm:@whiskeysockets/baileys@6.5.0"
+import { Boom } from "npm:@hapi/boom@10.0.1"
+import { Buffer } from "node:buffer"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,10 +49,7 @@ serve(async (req) => {
         }
 
         // Cria nova conexão
-        const { state, saveCreds } = await useMultiFileAuthState(`/tmp/auth_${connectionKey}`)
-        
         const sock = makeWASocket({
-          auth: state,
           printQRInTerminal: true,
           browser: ['Chrome (Linux)', '', ''],
         })
@@ -77,8 +76,7 @@ serve(async (req) => {
           }
 
           if (connection === 'close') {
-            const statusCode = (lastDisconnect?.error as any)?.output?.statusCode
-            const shouldReconnect = statusCode !== 401 && statusCode !== 408
+            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut
             
             if (shouldReconnect) {
               console.log('Reconectando...')
@@ -103,8 +101,6 @@ serve(async (req) => {
               })
           }
         })
-
-        sock.ev.on('creds.update', saveCreds)
 
         // Aguarda o QR code ser gerado
         let attempts = 0
