@@ -95,7 +95,7 @@ serve(async (req) => {
         prompt,
         temperature,
         user_id,
-        openai_assistant_id: assistant.id // Store the OpenAI Assistant ID
+        openai_assistant_id: assistant.id
       })
       .select()
       .single()

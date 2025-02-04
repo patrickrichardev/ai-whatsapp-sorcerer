@@ -53,6 +53,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          openai_assistant_id: string | null
           prompt: string
           temperature: number | null
           updated_at: string | null
@@ -63,6 +64,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          openai_assistant_id?: string | null
           prompt: string
           temperature?: number | null
           updated_at?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          openai_assistant_id?: string | null
           prompt?: string
           temperature?: number | null
           updated_at?: string | null

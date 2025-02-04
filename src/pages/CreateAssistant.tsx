@@ -50,6 +50,8 @@ const CreateAssistant = () => {
     setIsLoading(true)
 
     try {
+      toast.loading("Criando seu agente...", { id: "creating-agent" })
+
       const { data, error } = await supabase.functions.invoke('create-agent', {
         body: {
           name: formData.name,
@@ -62,11 +64,11 @@ const CreateAssistant = () => {
 
       if (error) throw error
 
-      toast.success("Agente criado com sucesso!")
+      toast.success("Agente criado com sucesso!", { id: "creating-agent" })
       navigate('/connect-whatsapp')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error)
-      toast.error(error.message || "Erro ao criar agente")
+      toast.error(error.message || "Erro ao criar agente", { id: "creating-agent" })
     } finally {
       setIsLoading(false)
     }
