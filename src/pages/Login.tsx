@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/AuthContext"
 import { useState } from "react"
+import { ThemeToggle } from "@/components/theme/ThemeToggle"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -23,6 +25,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="fixed top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center">
           <img
