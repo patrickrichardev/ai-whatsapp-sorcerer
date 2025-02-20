@@ -83,6 +83,87 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string
+          id: string
+          last_message: string | null
+          metadata: Json | null
+          status: string
+          unread_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone: string
+          id?: string
+          last_message?: string | null
+          metadata?: Json | null
+          status: string
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string
+          id?: string
+          last_message?: string | null
+          metadata?: Json | null
+          status?: string
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_agent"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          id: string
+          metadata: Json | null
+          sender_type: string
+          timestamp: string | null
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          id?: string
+          metadata?: Json | null
+          sender_type: string
+          timestamp?: string | null
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          id?: string
+          metadata?: Json | null
+          sender_type?: string
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string | null
