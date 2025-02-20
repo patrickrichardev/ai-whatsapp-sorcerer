@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   MessageSquare, 
-  Users, 
-  Bell, 
+  Clock,
+  CheckCircle,
   Filter,
   Search
 } from "lucide-react"
@@ -61,12 +61,12 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
           Todas
         </Button>
         <Button variant="ghost" size="sm" className="flex-1">
-          <Users className="h-4 w-4 mr-2" />
-          Grupos
+          <Clock className="h-4 w-4 mr-2" />
+          Em Espera
         </Button>
         <Button variant="ghost" size="sm" className="flex-1">
-          <Bell className="h-4 w-4 mr-2" />
-          Menções
+          <CheckCircle className="h-4 w-4 mr-2" />
+          Encerradas
         </Button>
       </nav>
 
