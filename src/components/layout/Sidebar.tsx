@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -7,6 +8,7 @@ import {
   MessageSquare,
   Settings,
   LogOut,
+  MessagesSquare,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -15,6 +17,11 @@ const navigation = [
     name: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
+  },
+  {
+    name: "Chat Ao Vivo",
+    href: "/live-chat",
+    icon: MessagesSquare,
   },
   {
     name: "Criar Assistente",
