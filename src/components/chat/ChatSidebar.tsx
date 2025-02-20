@@ -38,35 +38,35 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
   ]
 
   return (
-    <div className="w-80 border-r flex flex-col">
+    <div className="w-80 border-r flex flex-col bg-card">
       <div className="p-4 border-b">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="font-semibold">Conversas</h2>
-          <Button variant="ghost" size="icon">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-card-foreground">Conversas</h2>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
             <Filter className="h-4 w-4" />
           </Button>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar conversa..." 
-            className="pl-9"
+            className="pl-9 bg-background/50"
           />
         </div>
       </div>
       
-      <nav className="flex border-b px-1 py-2">
-        <Button variant="ghost" size="sm" className="flex-1">
-          <MessageSquare className="h-4 w-4 mr-2" />
-          Todas
+      <nav className="grid grid-cols-3 gap-1 p-2 border-b bg-background/50">
+        <Button variant="ghost" size="sm" className="h-9 px-2 text-sm">
+          <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="truncate">Todas</span>
         </Button>
-        <Button variant="ghost" size="sm" className="flex-1">
-          <Clock className="h-4 w-4 mr-2" />
-          Em Espera
+        <Button variant="ghost" size="sm" className="h-9 px-2 text-sm">
+          <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="truncate">Em Espera</span>
         </Button>
-        <Button variant="ghost" size="sm" className="flex-1">
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Encerradas
+        <Button variant="ghost" size="sm" className="h-9 px-2 text-sm">
+          <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="truncate">Encerradas</span>
         </Button>
       </nav>
 
@@ -76,27 +76,27 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
             key={chat.id}
             onClick={() => onSelectChat(chat)}
             className={cn(
-              "w-full px-4 py-3 flex items-start gap-3 hover:bg-muted/50 relative",
+              "w-full px-4 py-3 flex items-start gap-3 hover:bg-muted/50 relative transition-colors",
               selectedChat?.id === chat.id && "bg-muted"
             )}
           >
-            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
               {chat.name[0]}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center justify-between">
-                <span className="font-medium truncate">{chat.name}</span>
-                <span className="text-xs text-muted-foreground">{chat.timestamp}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium truncate text-sm">{chat.name}</span>
+                <span className="text-xs text-muted-foreground flex-shrink-0">{chat.timestamp}</span>
               </div>
-              <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{chat.lastMessage}</p>
               {chat.agent && (
-                <p className="text-xs text-primary truncate">
+                <p className="text-xs text-primary truncate mt-1">
                   {chat.agent} • {chat.department}
                 </p>
               )}
             </div>
             {chat.unread && (
-              <span className="absolute right-4 top-8 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {chat.unread}
               </span>
             )}

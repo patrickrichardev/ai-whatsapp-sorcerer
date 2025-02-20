@@ -20,7 +20,7 @@ export default function ChatLayout() {
   const [showDetails, setShowDetails] = useState(false)
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-background rounded-lg border overflow-hidden">
+    <div className="flex h-[calc(100vh-6rem)] bg-background rounded-xl border shadow-sm overflow-hidden">
       <ChatSidebar onSelectChat={setSelectedChat} selectedChat={selectedChat} />
       {selectedChat ? (
         <>
@@ -28,8 +28,13 @@ export default function ChatLayout() {
           {showDetails && <ChatDetails chat={selectedChat} onClose={() => setShowDetails(false)} />}
         </>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          Selecione uma conversa para começar
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-2 max-w-sm mx-auto px-4">
+            <h3 className="text-lg font-medium">Nenhuma conversa selecionada</h3>
+            <p className="text-sm text-muted-foreground">
+              Selecione uma conversa ao lado para começar o atendimento
+            </p>
+          </div>
         </div>
       )}
     </div>
