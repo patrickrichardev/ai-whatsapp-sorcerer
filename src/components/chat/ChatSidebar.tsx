@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
-  LayoutGrid, 
   MessageSquare, 
   Users, 
   Bell, 
@@ -18,7 +17,6 @@ interface ChatSidebarProps {
 }
 
 export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarProps) {
-  // Dados mockados para exemplo
   const chats: Chat[] = [
     {
       id: "1",

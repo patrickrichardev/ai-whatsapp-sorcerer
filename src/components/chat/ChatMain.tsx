@@ -55,7 +55,7 @@ export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {/* Área de mensagens */}
+        {/* Área de mensagens - será implementada posteriormente */}
       </div>
 
       <footer className="p-4 border-t">

@@ -30,7 +30,7 @@ const Layout = () => {
           </SheetContent>
         </Sheet>
       ) : (
-        <div className="fixed left-0 top-0 h-full w-72 border-r border-white/10">
+        <div className="fixed left-0 top-0 h-full w-72 border-r">
           <Sidebar />
         </div>
       )}
