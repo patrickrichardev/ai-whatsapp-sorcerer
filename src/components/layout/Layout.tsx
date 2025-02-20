@@ -14,32 +14,43 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-background">
       {isMobile ? (
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="fixed top-4 left-4 z-50"
-              aria-label="Menu"
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
-            <Sidebar />
-          </SheetContent>
-        </Sheet>
+        <>
+          <div className="fixed top-0 left-0 right-0 h-16 border-b bg-background z-40 px-4 flex items-center justify-between">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  aria-label="Menu"
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72">
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+            <ThemeToggle />
+          </div>
+          <main className="pt-16 px-4">
+            <Outlet />
+          </main>
+        </>
       ) : (
-        <div className="fixed left-0 top-0 h-full w-72 border-r">
-          <Sidebar />
-        </div>
+        <>
+          <div className="fixed inset-y-0 left-0 w-72 border-r bg-background">
+            <Sidebar />
+          </div>
+          <div className="pl-72">
+            <div className="fixed top-4 right-4 z-50">
+              <ThemeToggle />
+            </div>
+            <main className="container py-8">
+              <Outlet />
+            </main>
+          </div>
+        </>
       )}
-      <main className={`${isMobile ? 'px-4 pt-16' : 'pl-72'} p-8 transition-all duration-200 max-w-7xl mx-auto relative`}>
-        <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
-        </div>
-        <Outlet />
-      </main>
       <Toaster />
     </div>
   )

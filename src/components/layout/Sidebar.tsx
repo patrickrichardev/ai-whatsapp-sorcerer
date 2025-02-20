@@ -47,29 +47,31 @@ export default function Sidebar() {
   const isCurrentPath = (path: string) => location.pathname === path
 
   return (
-    <div className="flex h-full flex-col gap-6">
-      <div className="flex h-[80px] items-center justify-center px-6">
-        <img src="/elia.png" alt="Logo" className="h-12 w-auto" />
+    <div className="flex h-full flex-col bg-background">
+      <div className="flex h-16 items-center justify-center px-6 border-b">
+        <img src="/elia.png" alt="Logo" className="h-8 w-auto" />
       </div>
 
-      <nav className="flex-1 space-y-2 px-4">
-        {navigation.map((item) => (
-          <Link key={item.name} to={item.href}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start gap-3 text-base py-6",
-                isCurrentPath(item.href) && "bg-accent"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Button>
-          </Link>
-        ))}
-      </nav>
+      <div className="flex-1 overflow-y-auto">
+        <nav className="space-y-1 px-3 py-4">
+          {navigation.map((item) => (
+            <Link key={item.name} to={item.href}>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start gap-3 text-base py-6",
+                  isCurrentPath(item.href) && "bg-accent"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </Button>
+            </Link>
+          ))}
+        </nav>
+      </div>
 
-      <div className="p-4">
+      <div className="border-t p-3">
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-base py-6 text-destructive hover:text-destructive"
