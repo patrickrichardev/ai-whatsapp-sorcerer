@@ -6,7 +6,6 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "../theme/ThemeToggle"
 
 const Layout = () => {
   const isMobile = useIsMobile()
@@ -15,7 +14,7 @@ const Layout = () => {
     <div className="min-h-screen bg-background">
       {isMobile ? (
         <>
-          <div className="fixed top-0 left-0 right-0 h-16 border-b bg-background z-40 px-4 flex items-center justify-between">
+          <div className="fixed top-0 left-0 right-0 h-16 border-b bg-background z-40 px-4 flex items-center">
             <Sheet>
               <SheetTrigger asChild>
                 <Button 
@@ -30,7 +29,6 @@ const Layout = () => {
                 <Sidebar />
               </SheetContent>
             </Sheet>
-            <ThemeToggle />
           </div>
           <main className="pt-16 px-4">
             <Outlet />
@@ -42,9 +40,6 @@ const Layout = () => {
             <Sidebar />
           </div>
           <div className="pl-72">
-            <div className="fixed top-4 right-4 z-50">
-              <ThemeToggle />
-            </div>
             <main className="container py-8">
               <Outlet />
             </main>
