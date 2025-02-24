@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Instagram, Lock, MessageSquare, Globe } from "lucide-react"
+import { Instagram, Lock, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -64,21 +64,44 @@ const ConnectWhatsApp = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* WhatsApp Card */}
+          {/* WhatsApp Comum Card */}
           <Card className="relative overflow-hidden">
             <div className="p-6 flex flex-col items-center gap-4">
               <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
                 <MessageSquare className="w-8 h-8 text-green-500" />
               </div>
-              <h3 className="text-xl font-semibold">WhatsApp</h3>
+              <h3 className="text-xl font-semibold">WhatsApp Comum</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Conecte seu agente ao WhatsApp
+                Conecte seu agente ao WhatsApp via QR Code
               </p>
               <Button 
                 className="w-full mt-auto"
                 onClick={handleWhatsAppConnect}
               >
                 Conectar
+              </Button>
+            </div>
+          </Card>
+
+          {/* WhatsApp API Oficial Card */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
+              <Lock className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <div className="p-6 flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-8 h-8 text-green-500" />
+              </div>
+              <h3 className="text-xl font-semibold">WhatsApp API</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                API Oficial do WhatsApp Business
+              </p>
+              <Button 
+                className="w-full mt-auto"
+                variant="outline"
+                onClick={handleLockedPlatform}
+              >
+                Em breve
               </Button>
             </div>
           </Card>
@@ -95,29 +118,6 @@ const ConnectWhatsApp = () => {
               <h3 className="text-xl font-semibold">Instagram</h3>
               <p className="text-sm text-muted-foreground text-center">
                 Conecte seu agente ao Instagram
-              </p>
-              <Button 
-                className="w-full mt-auto"
-                variant="outline"
-                onClick={handleLockedPlatform}
-              >
-                Em breve
-              </Button>
-            </div>
-          </Card>
-
-          {/* Site Card */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <div className="p-6 flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
-                <Globe className="w-8 h-8 text-blue-500" />
-              </div>
-              <h3 className="text-xl font-semibold">Site</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Conecte seu agente ao seu site
               </p>
               <Button 
                 className="w-full mt-auto"
