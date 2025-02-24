@@ -81,7 +81,7 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
 
   const filteredChats = chats.filter(chat => 
     chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase())
+    chat.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (

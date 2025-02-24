@@ -7,12 +7,13 @@ import ChatDetails from "./ChatDetails"
 export interface Chat {
   id: string
   name: string
-  lastMessage?: string
-  timestamp: string
+  last_message?: string
+  updated_at: string
   status: "open" | "closed"
   agent?: string
   department?: string
-  unread?: number
+  unread_count?: number
+  customer_phone: string
 }
 
 export default function ChatLayout() {
