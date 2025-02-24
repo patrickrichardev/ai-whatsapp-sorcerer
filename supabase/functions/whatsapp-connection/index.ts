@@ -1,6 +1,7 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import { Venom } from 'npm:@wppconnect-team/wppconnect@1.29.0'
+import { Client, LocalAuth } from "npm:whatsapp-web.js@1.23.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,39 +32,105 @@ serve(async (req) => {
     switch (action) {
       case 'connect': {
         if (!clients[connectionKey]) {
-          const client = await Venom.create({
-            session: connectionKey,
-            catchQR: (qr) => {
-              clients[connectionKey].qr = qr
-              clients[connectionKey].status = 'awaiting_scan'
-              
-              // Update status in database
-              supabaseClient
-                .from('agent_connections')
-                .upsert({
-                  agent_id,
-                  platform: 'whatsapp',
-                  is_active: false,
-                  connection_data: { status: 'awaiting_scan', qr }
-                })
-            },
-            statusFind: (status) => {
-              console.log('Status:', status)
-              if (status === 'isLogged') {
-                clients[connectionKey].status = 'connected'
-                
-                // Update status in database
-                supabaseClient
-                  .from('agent_connections')
-                  .upsert({
-                    agent_id,
-                    platform: 'whatsapp',
-                    is_active: true,
-                    connection_data: { status: 'connected' }
-                  })
-              }
+          const client = new Client({
+            authStrategy: new LocalAuth({
+              clientId: connectionKey,
+            }),
+            puppeteer: {
+              headless: true,
+              args: ['--no-sandbox']
             }
           })
+
+          // Armazenar QR code quando gerado
+          client.on('qr', async (qr) => {
+            console.log('QR Code gerado:', qr)
+            clients[connectionKey].qr = qr
+            clients[connectionKey].status = 'awaiting_scan'
+            
+            // Atualizar status no banco de dados
+            await supabaseClient
+              .from('agent_connections')
+              .upsert({
+                agent_id,
+                platform: 'whatsapp',
+                is_active: false,
+                connection_data: { status: 'awaiting_scan', qr }
+              })
+          })
+
+          // Quando autenticado com sucesso
+          client.on('authenticated', async () => {
+            console.log('WhatsApp autenticado!')
+            clients[connectionKey].status = 'connected'
+            
+            await supabaseClient
+              .from('agent_connections')
+              .upsert({
+                agent_id,
+                platform: 'whatsapp',
+                is_active: true,
+                connection_data: { status: 'connected' }
+              })
+          })
+
+          // Quando receber mensagem
+          client.on('message', async (message) => {
+            if (message.from === 'status@broadcast') return
+
+            const contact = await message.getContact()
+            
+            // Buscar ou criar conversa
+            const { data: existingChat } = await supabaseClient
+              .from('chat_conversations')
+              .select()
+              .eq('customer_phone', message.from)
+              .single()
+
+            let chatId
+            if (!existingChat) {
+              const { data: newChat } = await supabaseClient
+                .from('chat_conversations')
+                .insert({
+                  agent_id,
+                  customer_phone: message.from,
+                  customer_name: contact.name || contact.pushname || message.from,
+                  status: 'open',
+                  last_message: message.body,
+                  unread_count: 1
+                })
+                .select()
+                .single()
+              
+              chatId = newChat?.id
+            } else {
+              chatId = existingChat.id
+              await supabaseClient
+                .from('chat_conversations')
+                .update({
+                  last_message: message.body,
+                  unread_count: (existingChat.unread_count || 0) + 1,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', chatId)
+            }
+
+            // Salvar mensagem
+            await supabaseClient
+              .from('chat_messages')
+              .insert({
+                chat_id: chatId,
+                content: message.body,
+                sender_type: 'customer',
+                metadata: {
+                  whatsapp_message_id: message.id,
+                  media_type: message.type
+                }
+              })
+          })
+
+          // Inicializar cliente
+          client.initialize()
 
           clients[connectionKey] = {
             client,
@@ -92,9 +159,25 @@ serve(async (req) => {
         )
       }
 
+      case 'send': {
+        const { phone, message } = await req.json()
+        const client = clients[connectionKey]?.client
+
+        if (!client) {
+          throw new Error('WhatsApp client not initialized')
+        }
+
+        await client.sendMessage(phone, message)
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       case 'disconnect': {
         if (clients[connectionKey]) {
-          await clients[connectionKey].client.close()
+          await clients[connectionKey].client.destroy()
           delete clients[connectionKey]
 
           await supabaseClient
