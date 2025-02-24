@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { QrCode, Loader2, CheckCircle2, XCircle } from "lucide-react"
@@ -13,6 +14,7 @@ const WhatsAppQR = () => {
   const [qrCode, setQrCode] = useState<string | null>(null)
   const [status, setStatus] = useState<"loading" | "awaiting_scan" | "connected" | "error">("loading")
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [attempts, setAttempts] = useState(0)
 
   const initializeConnection = async () => {
     if (!agentId) {
@@ -23,53 +25,74 @@ const WhatsAppQR = () => {
 
     try {
       setStatus("loading")
+      console.log("Iniciando conexão para agente:", agentId)
+      
       const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
         body: { action: "connect", agent_id: agentId }
       })
 
-      if (error) throw error
+      console.log("Resposta da função:", data)
+
+      if (error) {
+        console.error("Erro na função:", error)
+        throw error
+      }
 
       if (data.qr) {
+        console.log("QR Code recebido, tamanho:", data.qr.length)
         setQrCode(data.qr)
         setStatus("awaiting_scan")
+      } else if (data.status === "connected") {
+        setStatus("connected")
       } else {
+        console.error("Resposta inesperada:", data)
         setStatus("error")
         toast.error("Erro ao gerar QR code")
       }
     } catch (error) {
-      console.error("Error:", error)
+      console.error("Erro ao iniciar conexão:", error)
       setStatus("error")
       toast.error("Erro ao iniciar conexão")
     }
   }
 
   const checkStatus = async () => {
-    if (!agentId) return
+    if (!agentId || status === "connected") return
 
     try {
       const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
         body: { action: "status", agent_id: agentId }
       })
 
+      console.log("Status check response:", data)
+
       if (error) throw error
 
       if (data.status === "connected") {
         setStatus("connected")
         toast.success("WhatsApp conectado com sucesso!")
-        // Redireciona após 3 segundos
         setTimeout(() => navigate("/connect-whatsapp"), 3000)
+      } else if (data.qr && data.qr !== qrCode) {
+        console.log("Novo QR Code recebido")
+        setQrCode(data.qr)
+        setStatus("awaiting_scan")
       }
     } catch (error) {
-      console.error("Error checking status:", error)
+      console.error("Erro ao verificar status:", error)
     }
   }
 
   useEffect(() => {
     initializeConnection()
-    // Verifica o status a cada 5 segundos
     const interval = setInterval(checkStatus, 5000)
     return () => clearInterval(interval)
   }, [agentId])
+
+  useEffect(() => {
+    if (status === "awaiting_scan") {
+      setAttempts(prev => prev + 1)
+    }
+  }, [qrCode])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -99,7 +122,12 @@ const WhatsAppQR = () => {
           
           <p className="text-muted-foreground mb-6">
             {status === "loading" && "Aguarde enquanto preparamos seu QR code"}
-            {status === "awaiting_scan" && "Abra o WhatsApp no seu celular e escaneie o código QR"}
+            {status === "awaiting_scan" && (
+              <>
+                Abra o WhatsApp no seu celular e escaneie o código QR
+                {attempts > 1 && <div className="text-xs mt-1">Tentativa {attempts}</div>}
+              </>
+            )}
             {status === "connected" && "Redirecionando..."}
             {status === "error" && "Não foi possível estabelecer a conexão"}
           </p>
