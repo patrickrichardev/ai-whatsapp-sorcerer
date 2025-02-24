@@ -1,14 +1,15 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
-import * as wppconnect from "npm:@wppconnect-team/wppconnect@1.29.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const clients: { [key: string]: any } = {}
+// Configure aqui a URL do seu servidor Evolution API
+const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL') || 'http://localhost:8080'
+const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY') || 'your-api-key'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -26,158 +27,141 @@ serve(async (req) => {
       }
     )
 
-    const { action, agent_id } = await req.json()
-    const connectionKey = `agent_${agent_id}`
+    const { action, agent_id, phone, message } = await req.json()
+    const instanceName = `agent_${agent_id}`
 
     switch (action) {
       case 'connect': {
-        if (!clients[connectionKey]) {
-          console.log('Iniciando nova conexão para:', connectionKey)
-          
-          try {
-            const client = await wppconnect.create({
-              session: connectionKey,
-              catchQR: async (base64Qr, asciiQR, attempt) => {
-                console.log('QR Code gerado - Tentativa:', attempt)
-                if (clients[connectionKey]) {
-                  clients[connectionKey].qr = base64Qr
-                  clients[connectionKey].status = 'awaiting_scan'
-                }
-                
-                await supabaseClient
-                  .from('agent_connections')
-                  .upsert({
-                    agent_id,
-                    platform: 'whatsapp',
-                    is_active: false,
-                    connection_data: { status: 'awaiting_scan', qr: base64Qr }
-                  })
-              },
-              logQR: false,
-              puppeteerOptions: {
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-              }
+        try {
+          // Criar instância se não existir
+          const createInstanceResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': EVOLUTION_API_KEY
+            },
+            body: JSON.stringify({
+              instanceName,
+              token: agent_id,
+              qrcode: true
             })
+          })
 
-            console.log('Cliente criado com sucesso')
-
-            client.onStateChange(async (state) => {
-              console.log('Estado atual:', state)
-              if (state === 'CONNECTED') {
-                if (clients[connectionKey]) {
-                  clients[connectionKey].status = 'connected'
-                }
-                
-                await supabaseClient
-                  .from('agent_connections')
-                  .upsert({
-                    agent_id,
-                    platform: 'whatsapp',
-                    is_active: true,
-                    connection_data: { status: 'connected' }
-                  })
-              }
-            })
-
-            client.onMessage(async (message) => {
-              if (message.from === 'status@broadcast') return
-              console.log('Mensagem recebida:', message.from)
-
-              try {
-                const { data: existingChat } = await supabaseClient
-                  .from('chat_conversations')
-                  .select()
-                  .eq('customer_phone', message.from)
-                  .single()
-
-                let chatId
-                if (!existingChat) {
-                  const { data: newChat } = await supabaseClient
-                    .from('chat_conversations')
-                    .insert({
-                      agent_id,
-                      customer_phone: message.from,
-                      name: message.sender.pushname || message.from,
-                      status: 'open',
-                      last_message: message.body,
-                      unread_count: 1
-                    })
-                    .select()
-                    .single()
-                  
-                  chatId = newChat?.id
-                } else {
-                  chatId = existingChat.id
-                  await supabaseClient
-                    .from('chat_conversations')
-                    .update({
-                      last_message: message.body,
-                      unread_count: (existingChat.unread_count || 0) + 1,
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('id', chatId)
-                }
-
-                await supabaseClient
-                  .from('chat_messages')
-                  .insert({
-                    chat_id: chatId,
-                    content: message.body,
-                    sender_type: 'customer',
-                    metadata: {
-                      whatsapp_message_id: message.id,
-                      media_type: message.type
-                    }
-                  })
-              } catch (error) {
-                console.error('Erro ao processar mensagem:', error)
-              }
-            })
-
-            clients[connectionKey] = {
-              client,
-              qr: null,
-              status: 'initializing'
-            }
-
-            console.log('Cliente configurado e armazenado')
-          } catch (error) {
-            console.error('Erro ao criar cliente:', error)
-            throw error
+          if (!createInstanceResponse.ok) {
+            throw new Error('Falha ao criar instância')
           }
-        }
 
-        return new Response(
-          JSON.stringify({ 
-            qr: clients[connectionKey]?.qr,
-            status: clients[connectionKey]?.status 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+          // Conectar instância
+          const connectResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': EVOLUTION_API_KEY
+            }
+          })
+
+          const connectionData = await connectResponse.json()
+          
+          if (connectionData.qrcode) {
+            // Remove o prefixo "data:image/png;base64," do QR code
+            const qr = connectionData.qrcode.split(',')[1] || connectionData.qrcode
+
+            await supabaseClient
+              .from('agent_connections')
+              .upsert({
+                agent_id,
+                platform: 'whatsapp',
+                is_active: false,
+                connection_data: { status: 'awaiting_scan', qr }
+              })
+
+            return new Response(
+              JSON.stringify({ qr, status: 'awaiting_scan' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+
+          return new Response(
+            JSON.stringify({ status: connectionData.state || 'error' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        } catch (error) {
+          console.error('Erro ao conectar:', error)
+          throw error
+        }
       }
 
       case 'status': {
-        const connection = clients[connectionKey]
+        const statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+          }
+        })
+
+        const statusData = await statusResponse.json()
+        
+        if (statusData.state === 'open') {
+          await supabaseClient
+            .from('agent_connections')
+            .upsert({
+              agent_id,
+              platform: 'whatsapp',
+              is_active: true,
+              connection_data: { status: 'connected' }
+            })
+
+          return new Response(
+            JSON.stringify({ status: 'connected' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        // Se não estiver conectado, tenta obter novo QR code
+        const qrResponse = await fetch(`${EVOLUTION_API_URL}/instance/qrcode/${instanceName}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+          }
+        })
+
+        const qrData = await qrResponse.json()
+        
+        if (qrData.qrcode) {
+          const qr = qrData.qrcode.split(',')[1] || qrData.qrcode
+          return new Response(
+            JSON.stringify({ qr, status: 'awaiting_scan' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
         return new Response(
-          JSON.stringify({ 
-            status: connection?.status || 'disconnected',
-            qr: connection?.qr 
-          }),
+          JSON.stringify({ status: statusData.state }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
       case 'send': {
-        const { phone, message } = await req.json()
-        const client = clients[connectionKey]?.client
-
-        if (!client) {
-          throw new Error('WhatsApp client not initialized')
+        if (!phone) {
+          throw new Error('Número de telefone não fornecido')
         }
 
-        await client.sendText(phone, message)
-        
+        const sendResponse = await fetch(`${EVOLUTION_API_URL}/message/text/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+          },
+          body: JSON.stringify({
+            number: phone,
+            text: message
+          })
+        })
+
+        if (!sendResponse.ok) {
+          throw new Error('Falha ao enviar mensagem')
+        }
+
         return new Response(
           JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -185,19 +169,38 @@ serve(async (req) => {
       }
 
       case 'disconnect': {
-        if (clients[connectionKey]) {
-          await clients[connectionKey].client.close()
-          delete clients[connectionKey]
+        const logoutResponse = await fetch(`${EVOLUTION_API_URL}/instance/logout/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+          }
+        })
 
-          await supabaseClient
-            .from('agent_connections')
-            .upsert({
-              agent_id,
-              platform: 'whatsapp',
-              is_active: false,
-              connection_data: { status: 'disconnected' }
-            })
+        if (!logoutResponse.ok) {
+          throw new Error('Falha ao desconectar')
         }
+
+        const deleteResponse = await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+          }
+        })
+
+        if (!deleteResponse.ok) {
+          throw new Error('Falha ao deletar instância')
+        }
+
+        await supabaseClient
+          .from('agent_connections')
+          .upsert({
+            agent_id,
+            platform: 'whatsapp',
+            is_active: false,
+            connection_data: { status: 'disconnected' }
+          })
 
         return new Response(
           JSON.stringify({ status: 'disconnected' }),
