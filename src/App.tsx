@@ -9,6 +9,7 @@ import Settings from "./pages/Settings"
 import NotFound from "./pages/NotFound"
 import Login from "./pages/Login"
 import LiveChat from "./pages/LiveChat"
+import SelectAgent from "./pages/SelectAgent"
 import { AuthProvider } from "./contexts/AuthContext"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import { ThemeProvider } from "./components/theme/ThemeProvider"
@@ -30,6 +31,7 @@ function App() {
               <Route index element={<Index />} />
               <Route path="live-chat" element={<LiveChat />} />
               <Route path="create-assistant" element={<CreateAssistant />} />
+              <Route path="select-agent" element={<SelectAgent />} />
               <Route path="connect-whatsapp" element={<ConnectWhatsApp />} />
               <Route path="connect-whatsapp/qr" element={<WhatsAppQR />} />
               <Route path="settings" element={<Settings />} />
