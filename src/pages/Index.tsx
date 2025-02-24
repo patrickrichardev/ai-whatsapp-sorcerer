@@ -18,7 +18,7 @@ interface HistoryData {
   chats: number
 }
 
-export default function Index() {
+const Index = () => {
   const [stats, setStats] = useState<DashboardStats>({
     activeAgents: 0,
     attendedChats: 0,
@@ -31,11 +31,13 @@ export default function Index() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        if (!user?.id) return
+
         // Fetch active agents
         const { data: agents, error: agentsError } = await supabase
           .from('agents')
           .select('id')
-          .eq('user_id', user?.id)
+          .eq('user_id', user.id)
 
         if (agentsError) throw agentsError
 
@@ -80,9 +82,7 @@ export default function Index() {
       }
     }
 
-    if (user) {
-      fetchDashboardData()
-    }
+    fetchDashboardData()
   }, [user])
 
   if (loading) {
@@ -205,3 +205,5 @@ export default function Index() {
     </div>
   )
 }
+
+export default Index
