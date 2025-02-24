@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Instagram, Lock, MessageSquare } from "lucide-react"
+import { Instagram, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -85,8 +85,8 @@ const ConnectWhatsApp = () => {
 
           {/* WhatsApp API Oficial Card */}
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-muted-foreground" />
+            <div className="absolute -rotate-45 bg-foreground text-background font-medium py-1 px-12 text-sm shadow-lg -right-10 top-6 z-10">
+              Em breve
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
               <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
@@ -108,8 +108,8 @@ const ConnectWhatsApp = () => {
 
           {/* Instagram Card */}
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-muted-foreground" />
+            <div className="absolute -rotate-45 bg-foreground text-background font-medium py-1 px-12 text-sm shadow-lg -right-10 top-6 z-10">
+              Em breve
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
               <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center">
