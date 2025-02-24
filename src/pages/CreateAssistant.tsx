@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -151,130 +152,132 @@ const CreateAssistant = () => {
               Novo Agente
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
+          <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+            <DialogHeader className="p-6 pb-0">
               <DialogTitle>Criar Novo Agente</DialogTitle>
             </DialogHeader>
-            <Card className="p-6 space-y-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  <Label className="text-lg">Modelo de Agente</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card 
-                      className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                        Object.entries(formData).every(([key, value]) => 
-                          AGENT_TEMPLATES.custom[key as keyof typeof AGENT_TEMPLATES.custom] === value
-                        ) ? 'border-primary' : 'border-transparent'
-                      }`}
-                      onClick={() => handleTemplateChange('custom')}
-                    >
-                      <Settings className="w-8 h-8 mb-2 text-muted-foreground" />
-                      <h3 className="font-semibold">Personalizado</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Crie um agente do zero
-                      </p>
-                    </Card>
+            <div className="p-6 overflow-y-auto">
+              <Card className="p-6 space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-4">
+                    <Label className="text-lg">Modelo de Agente</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card 
+                        className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                          Object.entries(formData).every(([key, value]) => 
+                            AGENT_TEMPLATES.custom[key as keyof typeof AGENT_TEMPLATES.custom] === value
+                          ) ? 'border-primary' : 'border-transparent'
+                        }`}
+                        onClick={() => handleTemplateChange('custom')}
+                      >
+                        <Settings className="w-8 h-8 mb-2 text-muted-foreground" />
+                        <h3 className="font-semibold">Personalizado</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Crie um agente do zero
+                        </p>
+                      </Card>
 
-                    <Card 
-                      className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                        formData === AGENT_TEMPLATES.sales ? 'border-primary' : 'border-transparent'
-                      }`}
-                      onClick={() => handleTemplateChange('sales')}
-                    >
-                      <Sparkles className="w-8 h-8 mb-2 text-primary" />
-                      <h3 className="font-semibold">Vendedor</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Especialista em vendas
-                      </p>
-                    </Card>
+                      <Card 
+                        className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                          formData === AGENT_TEMPLATES.sales ? 'border-primary' : 'border-transparent'
+                        }`}
+                        onClick={() => handleTemplateChange('sales')}
+                      >
+                        <Sparkles className="w-8 h-8 mb-2 text-primary" />
+                        <h3 className="font-semibold">Vendedor</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Especialista em vendas
+                        </p>
+                      </Card>
 
-                    <Card 
-                      className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                        formData === AGENT_TEMPLATES.support ? 'border-primary' : 'border-transparent'
-                      }`}
-                      onClick={() => handleTemplateChange('support')}
-                    >
-                      <MessageSquare className="w-8 h-8 mb-2 text-green-500" />
-                      <h3 className="font-semibold">Suporte</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Atendimento ao cliente
-                      </p>
-                    </Card>
+                      <Card 
+                        className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                          formData === AGENT_TEMPLATES.support ? 'border-primary' : 'border-transparent'
+                        }`}
+                        onClick={() => handleTemplateChange('support')}
+                      >
+                        <MessageSquare className="w-8 h-8 mb-2 text-green-500" />
+                        <h3 className="font-semibold">Suporte</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Atendimento ao cliente
+                        </p>
+                      </Card>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Agente</Label>
-                  <div className="relative">
-                    <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="name" 
-                      name="name" 
-                      placeholder="Ex: Amanda" 
-                      required 
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="pl-10"
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome do Agente</Label>
+                    <div className="relative">
+                      <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="name" 
+                        name="name" 
+                        placeholder="Ex: Amanda" 
+                        required 
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea 
+                      id="description" 
+                      name="description"
+                      placeholder="Descreva o que seu agente faz..."
+                      className="resize-none"
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     />
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea 
-                    id="description" 
-                    name="description"
-                    placeholder="Descreva o que seu agente faz..."
-                    className="resize-none"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="prompt">Prompt do Agente</Label>
-                  <Textarea 
-                    id="prompt" 
-                    name="prompt"
-                    placeholder="Defina a personalidade do agente e coloque todas as informações..."
-                    className="resize-none"
-                    rows={5}
-                    required
-                    value={formData.prompt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, prompt: e.target.value }))}
-                  />
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Temperatura</Label>
-                    <span className="text-sm text-muted-foreground">{temperature}</span>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="prompt">Prompt do Agente</Label>
+                    <Textarea 
+                      id="prompt" 
+                      name="prompt"
+                      placeholder="Defina a personalidade do agente e coloque todas as informações..."
+                      className="resize-none"
+                      rows={5}
+                      required
+                      value={formData.prompt}
+                      onChange={(e) => setFormData(prev => ({ ...prev, prompt: e.target.value }))}
+                    />
                   </div>
-                  <Slider
-                    value={temperature}
-                    onValueChange={setTemperature}
-                    max={1}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Valores mais altos tornam a resposta do agente mais criativa, valores mais baixos a tornam mais focada.
-                  </p>
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Criando...
-                    </>
-                  ) : (
-                    "Criar Agente"
-                  )}
-                </Button>
-              </form>
-            </Card>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Temperatura</Label>
+                      <span className="text-sm text-muted-foreground">{temperature}</span>
+                    </div>
+                    <Slider
+                      value={temperature}
+                      onValueChange={setTemperature}
+                      max={1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Valores mais altos tornam a resposta do agente mais criativa, valores mais baixos a tornam mais focada.
+                    </p>
+                  </div>
+                  
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Criando...
+                      </>
+                    ) : (
+                      "Criar Agente"
+                    )}
+                  </Button>
+                </form>
+              </Card>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -308,10 +311,7 @@ const CreateAssistant = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        variant="destructive"
-                        onClick={() => handleDeleteAgent(agent.id)}
-                      >
+                      <AlertDialogAction onClick={() => handleDeleteAgent(agent.id)}>
                         Excluir
                       </AlertDialogAction>
                     </AlertDialogFooter>
