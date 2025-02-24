@@ -20,7 +20,7 @@ export default function ChatLayout() {
   const [showDetails, setShowDetails] = useState(false)
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] bg-background rounded-xl border shadow-sm overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       <ChatSidebar onSelectChat={setSelectedChat} selectedChat={selectedChat} />
       {selectedChat ? (
         <>
