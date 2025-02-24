@@ -1,17 +1,27 @@
-
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
-import { useNavigate } from "react-router-dom"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bot, Loader2, MessageSquare, Settings, Sparkles } from "lucide-react"
+import { Bot, Loader2, MessageSquare, Settings, Sparkles, Plus, Trash2 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const AGENT_TEMPLATES = {
   custom: {
@@ -34,12 +44,42 @@ const AGENT_TEMPLATES = {
   },
 }
 
+interface Agent {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+}
+
 const CreateAssistant = () => {
   const [temperature, setTemperature] = useState([0.7])
   const [isLoading, setIsLoading] = useState(false)
+  const [agents, setAgents] = useState<Agent[]>([])
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [formData, setFormData] = useState(AGENT_TEMPLATES.custom)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  useEffect(() => {
+    fetchAgents()
+  }, [user])
+
+  const fetchAgents = async () => {
+    if (!user?.id) return
+
+    try {
+      const { data, error } = await supabase
+        .from("agents")
+        .select("id, name, description, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      setAgents(data || [])
+    } catch (error) {
+      console.error("Error fetching agents:", error)
+      toast.error("Erro ao carregar agentes")
+    }
+  }
 
   const handleTemplateChange = (value: string) => {
     const template = AGENT_TEMPLATES[value as keyof typeof AGENT_TEMPLATES]
@@ -67,7 +107,9 @@ const CreateAssistant = () => {
       if (error) throw error
 
       toast.success("Agente criado com sucesso!", { id: toastId })
-      navigate('/select-agent')
+      setIsDialogOpen(false)
+      fetchAgents()
+      setFormData(AGENT_TEMPLATES.custom)
     } catch (error: any) {
       console.error('Error:', error)
       toast.error(error.message || "Erro ao criar agente")
@@ -76,135 +118,224 @@ const CreateAssistant = () => {
     }
   }
 
+  const handleDeleteAgent = async (agentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("agents")
+        .delete()
+        .eq("id", agentId)
+
+      if (error) throw error
+
+      toast.success("Agente excluído com sucesso!")
+      fetchAgents()
+    } catch (error) {
+      console.error("Error deleting agent:", error)
+      toast.error("Erro ao excluir agente")
+    }
+  }
+
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4 animate-fadeIn">
-      <div className="space-y-2 text-center mb-8">
-        <h1 className="text-4xl font-bold">Criar Agente</h1>
-        <p className="text-muted-foreground">
-          Configure seu agente de IA personalizado
-        </p>
+    <div className="container max-w-4xl mx-auto py-8 px-4 animate-fadeIn">
+      <div className="flex justify-between items-center mb-8">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold">Meus Agentes</h1>
+          <p className="text-muted-foreground">
+            Gerencie seus agentes de IA
+          </p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Agente
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Criar Novo Agente</DialogTitle>
+            </DialogHeader>
+            <Card className="p-6 space-y-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-lg">Modelo de Agente</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card 
+                      className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                        Object.entries(formData).every(([key, value]) => 
+                          AGENT_TEMPLATES.custom[key as keyof typeof AGENT_TEMPLATES.custom] === value
+                        ) ? 'border-primary' : 'border-transparent'
+                      }`}
+                      onClick={() => handleTemplateChange('custom')}
+                    >
+                      <Settings className="w-8 h-8 mb-2 text-muted-foreground" />
+                      <h3 className="font-semibold">Personalizado</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Crie um agente do zero
+                      </p>
+                    </Card>
+
+                    <Card 
+                      className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                        formData === AGENT_TEMPLATES.sales ? 'border-primary' : 'border-transparent'
+                      }`}
+                      onClick={() => handleTemplateChange('sales')}
+                    >
+                      <Sparkles className="w-8 h-8 mb-2 text-primary" />
+                      <h3 className="font-semibold">Vendedor</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Especialista em vendas
+                      </p>
+                    </Card>
+
+                    <Card 
+                      className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                        formData === AGENT_TEMPLATES.support ? 'border-primary' : 'border-transparent'
+                      }`}
+                      onClick={() => handleTemplateChange('support')}
+                    >
+                      <MessageSquare className="w-8 h-8 mb-2 text-green-500" />
+                      <h3 className="font-semibold">Suporte</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Atendimento ao cliente
+                      </p>
+                    </Card>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do Agente</Label>
+                  <div className="relative">
+                    <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="name" 
+                      name="name" 
+                      placeholder="Ex: Amanda" 
+                      required 
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea 
+                    id="description" 
+                    name="description"
+                    placeholder="Descreva o que seu agente faz..."
+                    className="resize-none"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="prompt">Prompt do Agente</Label>
+                  <Textarea 
+                    id="prompt" 
+                    name="prompt"
+                    placeholder="Defina a personalidade do agente e coloque todas as informações..."
+                    className="resize-none"
+                    rows={5}
+                    required
+                    value={formData.prompt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, prompt: e.target.value }))}
+                  />
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Temperatura</Label>
+                    <span className="text-sm text-muted-foreground">{temperature}</span>
+                  </div>
+                  <Slider
+                    value={temperature}
+                    onValueChange={setTemperature}
+                    max={1}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Valores mais altos tornam a resposta do agente mais criativa, valores mais baixos a tornam mais focada.
+                  </p>
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    "Criar Agente"
+                  )}
+                </Button>
+              </form>
+            </Card>
+          </DialogContent>
+        </Dialog>
       </div>
-      
-      <Card className="p-6 space-y-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <Label className="text-lg">Modelo de Agente</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card 
-                className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                  Object.entries(formData).every(([key, value]) => 
-                    AGENT_TEMPLATES.custom[key as keyof typeof AGENT_TEMPLATES.custom] === value
-                  ) ? 'border-primary' : 'border-transparent'
-                }`}
-                onClick={() => handleTemplateChange('custom')}
-              >
-                <Settings className="w-8 h-8 mb-2 text-muted-foreground" />
-                <h3 className="font-semibold">Personalizado</h3>
-                <p className="text-sm text-muted-foreground">
-                  Crie um agente do zero
-                </p>
-              </Card>
 
-              <Card 
-                className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                  formData === AGENT_TEMPLATES.sales ? 'border-primary' : 'border-transparent'
-                }`}
-                onClick={() => handleTemplateChange('sales')}
-              >
-                <Sparkles className="w-8 h-8 mb-2 text-primary" />
-                <h3 className="font-semibold">Vendedor</h3>
-                <p className="text-sm text-muted-foreground">
-                  Especialista em vendas
-                </p>
-              </Card>
-
-              <Card 
-                className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                  formData === AGENT_TEMPLATES.support ? 'border-primary' : 'border-transparent'
-                }`}
-                onClick={() => handleTemplateChange('support')}
-              >
-                <MessageSquare className="w-8 h-8 mb-2 text-green-500" />
-                <h3 className="font-semibold">Suporte</h3>
-                <p className="text-sm text-muted-foreground">
-                  Atendimento ao cliente
-                </p>
-              </Card>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome do Agente</Label>
-            <div className="relative">
-              <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                id="name" 
-                name="name" 
-                placeholder="Ex: Amanda" 
-                required 
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea 
-              id="description" 
-              name="description"
-              placeholder="Descreva o que seu agente faz..."
-              className="resize-none"
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="prompt">Prompt do Agente</Label>
-            <Textarea 
-              id="prompt" 
-              name="prompt"
-              placeholder="Defina a personalidade do agente e coloque todas as informações..."
-              className="resize-none"
-              rows={5}
-              required
-              value={formData.prompt}
-              onChange={(e) => setFormData(prev => ({ ...prev, prompt: e.target.value }))}
-            />
-          </div>
-          
-          <div className="space-y-4">
+      <div className="grid gap-4">
+        {agents.map((agent) => (
+          <Card key={agent.id} className="p-6">
             <div className="flex items-center justify-between">
-              <Label>Temperatura</Label>
-              <span className="text-sm text-muted-foreground">{temperature}</span>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">{agent.name}</h3>
+                {agent.description && (
+                  <p className="text-sm text-muted-foreground mb-2">{agent.description}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Criado em {new Date(agent.created_at).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Agente</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir este agente? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        onClick={() => handleDeleteAgent(agent.id)}
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
-            <Slider
-              value={temperature}
-              onValueChange={setTemperature}
-              max={1}
-              step={0.1}
-              className="w-full"
-            />
-            <p className="text-sm text-muted-foreground">
-              Valores mais altos tornam a resposta do agente mais criativa, valores mais baixos a tornam mais focada.
-            </p>
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Criando...
-              </>
-            ) : (
-              "Criar Agente"
-            )}
-          </Button>
-        </form>
-      </Card>
+          </Card>
+        ))}
+
+        {agents.length === 0 && (
+          <Card className="p-6">
+            <div className="text-center space-y-4">
+              <Bot className="w-12 h-12 text-muted-foreground mx-auto" />
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">Nenhum agente encontrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Você ainda não criou nenhum agente. Crie seu primeiro agente clicando no botão acima.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

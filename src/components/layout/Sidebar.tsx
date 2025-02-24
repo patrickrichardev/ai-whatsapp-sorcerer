@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   MessagesSquare,
+  Bot,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
@@ -25,9 +26,9 @@ const navigation = [
     icon: MessagesSquare,
   },
   {
-    name: "Criar Assistente",
+    name: "Meus Agentes",
     href: "/create-assistant",
-    icon: MessageSquarePlus,
+    icon: Bot,
   },
   {
     name: "Conectar Agente",
