@@ -85,7 +85,7 @@ const ConnectWhatsApp = () => {
 
           {/* WhatsApp API Oficial Card */}
           <Card className="relative overflow-hidden">
-            <div className="absolute -rotate-45 bg-foreground text-background font-medium py-1 px-12 text-sm shadow-lg -right-10 top-6 z-10">
+            <div className="absolute top-0 left-0 right-0 bg-destructive text-destructive-foreground text-center py-1 text-sm font-medium">
               Em breve
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
@@ -108,7 +108,7 @@ const ConnectWhatsApp = () => {
 
           {/* Instagram Card */}
           <Card className="relative overflow-hidden">
-            <div className="absolute -rotate-45 bg-foreground text-background font-medium py-1 px-12 text-sm shadow-lg -right-10 top-6 z-10">
+            <div className="absolute top-0 left-0 right-0 bg-destructive text-destructive-foreground text-center py-1 text-sm font-medium">
               Em breve
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
