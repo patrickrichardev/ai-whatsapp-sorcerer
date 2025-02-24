@@ -6,13 +6,18 @@ import {
   Clock,
   CheckCircle,
   Filter,
-  Search
+  Search,
+  Calendar
 } from "lucide-react"
 import { Chat } from "./ChatLayout"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
+import { format } from "date-fns"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { ptBR } from "date-fns/locale"
 
 interface ChatSidebarProps {
   onSelectChat: (chat: Chat) => void
@@ -23,6 +28,7 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
   const [chats, setChats] = useState<Chat[]>([])
   const [filter, setFilter] = useState<'all' | 'waiting' | 'closed'>('all')
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   useEffect(() => {
     const loadChats = async () => {
@@ -36,6 +42,19 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
           query = query.eq('status', 'open')
         } else if (filter === 'closed') {
           query = query.eq('status', 'closed')
+        }
+
+        // Adiciona filtro por data se uma data estiver selecionada
+        if (selectedDate) {
+          const startOfDay = new Date(selectedDate)
+          startOfDay.setHours(0, 0, 0, 0)
+          
+          const endOfDay = new Date(selectedDate)
+          endOfDay.setHours(23, 59, 59, 999)
+
+          query = query
+            .gte('created_at', startOfDay.toISOString())
+            .lte('created_at', endOfDay.toISOString())
         }
 
         const { data, error } = await query
@@ -77,21 +96,66 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [filter])
+  }, [filter, selectedDate])
 
   const filteredChats = chats.filter(chat => 
     chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     chat.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date || null)
+  }
+
+  const handleClearDate = () => {
+    setSelectedDate(null)
+  }
+
   return (
     <div className="w-80 border-r flex flex-col bg-card">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-card-foreground">Conversas</h2>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant={selectedDate ? "default" : "ghost"} 
+                  size="icon" 
+                  className="h-8 w-8"
+                >
+                  <Calendar className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <div className="p-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Filtrar por data</span>
+                    {selectedDate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2"
+                        onClick={handleClearDate}
+                      >
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  locale={ptBR}
+                  className="rounded-md border-0"
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -133,6 +197,24 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
           <span className="truncate">Encerradas</span>
         </Button>
       </nav>
+
+      {selectedDate && (
+        <div className="px-4 py-2 border-b bg-muted/30">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2"
+              onClick={handleClearDate}
+            >
+              Limpar
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {filteredChats.map((chat) => (
