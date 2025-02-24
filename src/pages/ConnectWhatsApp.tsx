@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card"
 import { Link } from "react-router-dom"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Bot, AlertTriangle, WhatsApp } from "lucide-react"
+import { Bot, AlertTriangle, MessageSquare } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 
 const ConnectWhatsApp = () => {
@@ -35,7 +35,7 @@ const ConnectWhatsApp = () => {
             <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center space-x-4">
                 <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg">
-                  <WhatsApp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">
@@ -53,7 +53,7 @@ const ConnectWhatsApp = () => {
           <Card className="p-6 opacity-50 cursor-not-allowed">
             <div className="flex items-center space-x-4">
               <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg">
-                <WhatsApp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
