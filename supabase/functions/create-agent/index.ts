@@ -19,9 +19,27 @@ serve(async (req) => {
   try {
     const { name, description, prompt, temperature, user_id } = await req.json()
 
-    console.log('Creating agent with:', { name, description, prompt, temperature, user_id })
+    // Verificar se o OPENAI_API_KEY está configurado
+    if (!openAIApiKey) {
+      console.error('OpenAI API Key não está configurada')
+      throw new Error('OpenAI API Key não está configurada')
+    }
+
+    console.log('Iniciando criação do agente com:', { 
+      name, 
+      description: description?.substring(0, 50), // Log parcial para evitar dados sensíveis
+      promptLength: prompt?.length,
+      temperature, 
+      user_id 
+    })
+
+    // Validação dos dados de entrada
+    if (!name || !prompt || !user_id) {
+      throw new Error('Dados obrigatórios faltando: nome, prompt ou user_id')
+    }
 
     // First, validate the prompt with OpenAI
+    console.log('Validando prompt com OpenAI...')
     const validationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,22 +59,22 @@ serve(async (req) => {
       }),
     })
 
+    const validationResponseText = await validationResponse.text()
+    console.log('Resposta da validação OpenAI:', validationResponseText)
+
     if (!validationResponse.ok) {
-      console.error('OpenAI Validation Error:', await validationResponse.text())
-      throw new Error('Failed to validate prompt with OpenAI')
+      throw new Error(`Falha na validação do prompt: ${validationResponseText}`)
     }
 
-    const validationData = await validationResponse.json()
-    console.log('Validation Response:', validationData)
-    
+    const validationData = JSON.parse(validationResponseText)
     const isValidPrompt = validationData.choices[0].message.content.toLowerCase().includes('valid')
 
     if (!isValidPrompt) {
-      throw new Error('Invalid prompt structure')
+      throw new Error('Estrutura do prompt inválida')
     }
 
     // Create OpenAI Assistant
-    console.log('Creating OpenAI Assistant...')
+    console.log('Criando Assistente OpenAI...')
     const assistantResponse = await fetch('https://api.openai.com/v1/assistants', {
       method: 'POST',
       headers: {
@@ -73,22 +91,29 @@ serve(async (req) => {
       })
     })
 
+    const assistantResponseText = await assistantResponse.text()
+    console.log('Resposta da criação do Assistente:', assistantResponseText)
+
     if (!assistantResponse.ok) {
-      console.error('OpenAI Assistant Creation Error:', await assistantResponse.text())
-      throw new Error('Failed to create OpenAI Assistant')
+      throw new Error(`Falha ao criar Assistente OpenAI: ${assistantResponseText}`)
     }
 
-    const assistant = await assistantResponse.json()
-    console.log('OpenAI Assistant created:', assistant)
+    const assistant = JSON.parse(assistantResponseText)
 
     // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    console.log('Conectando ao Supabase...')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-    // Insert the agent into the database with the OpenAI Assistant ID
-    const { data: agent, error } = await supabaseClient
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Configurações do Supabase faltando')
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey)
+
+    // Insert the agent into the database
+    console.log('Inserindo agente no banco de dados...')
+    const { data: agent, error: dbError } = await supabaseClient
       .from('agents')
       .insert({
         name,
@@ -101,11 +126,12 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (error) {
-      console.error('Supabase Error:', error)
-      throw error
+    if (dbError) {
+      console.error('Erro Supabase:', dbError)
+      throw new Error(`Erro ao salvar agente: ${dbError.message}`)
     }
 
+    console.log('Agente criado com sucesso!')
     return new Response(
       JSON.stringify({ agent }),
       { 
@@ -115,12 +141,15 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error:', error.message)
+    console.error('Erro na criação do agente:', error.message)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'Erro interno ao criar agente',
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 500
       }
     )
   }
