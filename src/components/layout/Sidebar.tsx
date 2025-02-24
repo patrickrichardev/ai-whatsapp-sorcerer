@@ -11,6 +11,7 @@ import {
   MessagesSquare,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { ThemeToggle } from "@/components/theme/ThemeToggle"
 
 const navigation = [
   {
@@ -71,7 +72,8 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <div className="border-t p-3">
+      <div className="border-t p-3 space-y-3">
+        <ThemeToggle className="w-full justify-start" />
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-base py-6 text-destructive hover:text-destructive"
