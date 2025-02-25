@@ -9,8 +9,7 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bot, Loader2, MessageSquare, Settings, Sparkles, Plus, Trash2 } from "lucide-react"
+import { Bot, Loader2, MessageSquare, Settings, Sparkles, Plus, Trash2, Pencil } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -49,6 +48,8 @@ interface Agent {
   id: string
   name: string
   description: string | null
+  prompt: string
+  temperature: number
   created_at: string
 }
 
@@ -59,6 +60,7 @@ const CreateAssistant = () => {
   const { user } = useAuth()
   const [formData, setFormData] = useState(AGENT_TEMPLATES.custom)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingAgent, setEditingAgent] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAgents()
@@ -70,7 +72,7 @@ const CreateAssistant = () => {
     try {
       const { data, error } = await supabase
         .from("agents")
-        .select("id, name, description, created_at")
+        .select("id, name, description, prompt, temperature, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
 
@@ -88,32 +90,67 @@ const CreateAssistant = () => {
     setTemperature([template.temperature])
   }
 
+  const handleEditAgent = (agent: Agent) => {
+    setFormData({
+      name: agent.name,
+      description: agent.description || "",
+      prompt: agent.prompt,
+      temperature: agent.temperature,
+    })
+    setTemperature([agent.temperature])
+    setEditingAgent(agent.id)
+    setIsDialogOpen(true)
+  }
+
+  const resetForm = () => {
+    setFormData(AGENT_TEMPLATES.custom)
+    setTemperature([0.7])
+    setEditingAgent(null)
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const toastId = toast.loading("Criando seu agente...")
+      const toastId = toast.loading(editingAgent ? "Atualizando agente..." : "Criando seu agente...")
 
-      const { data, error } = await supabase.functions.invoke('create-agent', {
-        body: {
-          name: formData.name,
-          description: formData.description,
-          prompt: formData.prompt,
-          temperature: temperature[0],
-          user_id: user?.id
-        }
-      })
+      if (editingAgent) {
+        const { error } = await supabase
+          .from('agents')
+          .update({
+            name: formData.name,
+            description: formData.description,
+            prompt: formData.prompt,
+            temperature: temperature[0],
+          })
+          .eq('id', editingAgent)
 
-      if (error) throw error
+        if (error) throw error
 
-      toast.success("Agente criado com sucesso!", { id: toastId })
+        toast.success("Agente atualizado com sucesso!", { id: toastId })
+      } else {
+        const { error } = await supabase.functions.invoke('create-agent', {
+          body: {
+            name: formData.name,
+            description: formData.description,
+            prompt: formData.prompt,
+            temperature: temperature[0],
+            user_id: user?.id
+          }
+        })
+
+        if (error) throw error
+
+        toast.success("Agente criado com sucesso!", { id: toastId })
+      }
+
       setIsDialogOpen(false)
       fetchAgents()
-      setFormData(AGENT_TEMPLATES.custom)
+      resetForm()
     } catch (error: any) {
       console.error('Error:', error)
-      toast.error(error.message || "Erro ao criar agente")
+      toast.error(error.message || "Erro ao salvar agente")
     } finally {
       setIsLoading(false)
     }
@@ -136,6 +173,13 @@ const CreateAssistant = () => {
     }
   }
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open)
+    if (!open) {
+      resetForm()
+    }
+  }
+
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4 animate-fadeIn">
       <div className="flex justify-between items-center mb-8">
@@ -145,7 +189,7 @@ const CreateAssistant = () => {
             Gerencie seus agentes de IA
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -154,56 +198,58 @@ const CreateAssistant = () => {
           </DialogTrigger>
           <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
             <DialogHeader className="p-6 pb-0">
-              <DialogTitle>Criar Novo Agente</DialogTitle>
+              <DialogTitle>{editingAgent ? "Editar Agente" : "Criar Novo Agente"}</DialogTitle>
             </DialogHeader>
             <div className="p-6 overflow-y-auto">
               <Card className="p-6 space-y-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <Label className="text-lg">Modelo de Agente</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card 
-                        className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                          Object.entries(formData).every(([key, value]) => 
-                            AGENT_TEMPLATES.custom[key as keyof typeof AGENT_TEMPLATES.custom] === value
-                          ) ? 'border-primary' : 'border-transparent'
-                        }`}
-                        onClick={() => handleTemplateChange('custom')}
-                      >
-                        <Settings className="w-8 h-8 mb-2 text-muted-foreground" />
-                        <h3 className="font-semibold">Personalizado</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Crie um agente do zero
-                        </p>
-                      </Card>
+                  {!editingAgent && (
+                    <div className="space-y-4">
+                      <Label className="text-lg">Modelo de Agente</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card 
+                          className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                            Object.entries(formData).every(([key, value]) => 
+                              AGENT_TEMPLATES.custom[key as keyof typeof AGENT_TEMPLATES.custom] === value
+                            ) ? 'border-primary' : 'border-transparent'
+                          }`}
+                          onClick={() => handleTemplateChange('custom')}
+                        >
+                          <Settings className="w-8 h-8 mb-2 text-muted-foreground" />
+                          <h3 className="font-semibold">Personalizado</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Crie um agente do zero
+                          </p>
+                        </Card>
 
-                      <Card 
-                        className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                          formData === AGENT_TEMPLATES.sales ? 'border-primary' : 'border-transparent'
-                        }`}
-                        onClick={() => handleTemplateChange('sales')}
-                      >
-                        <Sparkles className="w-8 h-8 mb-2 text-primary" />
-                        <h3 className="font-semibold">Vendedor</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Especialista em vendas
-                        </p>
-                      </Card>
+                        <Card 
+                          className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                            formData === AGENT_TEMPLATES.sales ? 'border-primary' : 'border-transparent'
+                          }`}
+                          onClick={() => handleTemplateChange('sales')}
+                        >
+                          <Sparkles className="w-8 h-8 mb-2 text-primary" />
+                          <h3 className="font-semibold">Vendedor</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Especialista em vendas
+                          </p>
+                        </Card>
 
-                      <Card 
-                        className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
-                          formData === AGENT_TEMPLATES.support ? 'border-primary' : 'border-transparent'
-                        }`}
-                        onClick={() => handleTemplateChange('support')}
-                      >
-                        <MessageSquare className="w-8 h-8 mb-2 text-green-500" />
-                        <h3 className="font-semibold">Suporte</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Atendimento ao cliente
-                        </p>
-                      </Card>
+                        <Card 
+                          className={`p-4 cursor-pointer hover:shadow-md transition-all border-2 ${
+                            formData === AGENT_TEMPLATES.support ? 'border-primary' : 'border-transparent'
+                          }`}
+                          onClick={() => handleTemplateChange('support')}
+                        >
+                          <MessageSquare className="w-8 h-8 mb-2 text-green-500" />
+                          <h3 className="font-semibold">Suporte</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Atendimento ao cliente
+                          </p>
+                        </Card>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome do Agente</Label>
@@ -269,10 +315,10 @@ const CreateAssistant = () => {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Criando...
+                        {editingAgent ? "Atualizando..." : "Criando..."}
                       </>
                     ) : (
-                      "Criar Agente"
+                      editingAgent ? "Atualizar Agente" : "Criar Agente"
                     )}
                   </Button>
                 </form>
@@ -296,6 +342,13 @@ const CreateAssistant = () => {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleEditAgent(agent)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="icon">
