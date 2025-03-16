@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -9,8 +8,8 @@ const corsHeaders = {
 }
 
 // Configure aqui a URL do seu servidor Evolution API
-const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL') || 'http://localhost:8080'
-const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY') || 'your-api-key'
+const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL') || 'https://evolutionapi-evolution-api.nqfltx.easypanel.host'
+const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY') || '429683C4C977415CAAFCCE10F7D57E11'
 
 console.log(`Usando EVOLUTION_API_URL: ${EVOLUTION_API_URL}`)
 
@@ -51,6 +50,7 @@ serve(async (req) => {
     async function createInstance() {
       console.log(`Criando instância: ${instanceName}`)
       try {
+        console.log(`Enviando requisição para: ${EVOLUTION_API_URL}/instance/create`)
         const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
           method: 'POST',
           headers: {
@@ -77,22 +77,35 @@ serve(async (req) => {
           
           // Verificar se a resposta contém HTML ou outros erros
           if (rawResponse.includes('<!DOCTYPE') || rawResponse.includes('<html>')) {
-            return { success: false, error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor." }
+            return { 
+              success: false, 
+              error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor.",
+              details: `Resposta recebida (início): ${rawResponse.substring(0, 200)}...`
+            }
           }
           
-          return { success: false, error: `Resposta inválida do servidor: ${e.message}` }
+          return { 
+            success: false, 
+            error: `Resposta inválida do servidor: ${e.message}`,
+            details: `Resposta completa: ${rawResponse}`
+          }
         }
 
         return { success: true, data: responseData }
       } catch (error) {
         console.error(`Erro ao criar instância: ${error.message}`)
-        return { success: false, error: `Falha ao criar instância: ${error.message}` }
+        return { 
+          success: false, 
+          error: `Falha ao criar instância: ${error.message}`,
+          details: error.stack || JSON.stringify(error)
+        }
       }
     }
 
     async function connectInstance() {
       console.log(`Conectando instância: ${instanceName}`)
       try {
+        console.log(`Enviando requisição para: ${EVOLUTION_API_URL}/instance/connect/${instanceName}`)
         const connectResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
           method: 'POST',
           headers: {
@@ -114,22 +127,35 @@ serve(async (req) => {
           
           // Verificar se a resposta contém HTML ou outros erros
           if (rawResponse.includes('<!DOCTYPE') || rawResponse.includes('<html>')) {
-            return { success: false, error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor." }
+            return { 
+              success: false, 
+              error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor.",
+              details: `Resposta recebida (início): ${rawResponse.substring(0, 200)}...`
+            }
           }
           
-          return { success: false, error: `Resposta inválida do servidor: ${e.message}` }
+          return { 
+            success: false, 
+            error: `Resposta inválida do servidor: ${e.message}`,
+            details: `Resposta completa: ${rawResponse}`
+          }
         }
 
         return { success: true, data: responseData }
       } catch (error) {
         console.error(`Erro ao conectar instância: ${error.message}`)
-        return { success: false, error: `Falha ao conectar instância: ${error.message}` }
+        return { 
+          success: false, 
+          error: `Falha ao conectar instância: ${error.message}`,
+          details: error.stack || JSON.stringify(error)
+        }
       }
     }
 
     async function checkInstanceStatus() {
       console.log(`Verificando status da instância: ${instanceName}`)
       try {
+        console.log(`Enviando requisição para: ${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`)
         const statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -150,22 +176,35 @@ serve(async (req) => {
           
           // Verificar se a resposta contém HTML ou outros erros
           if (rawResponse.includes('<!DOCTYPE') || rawResponse.includes('<html>')) {
-            return { success: false, error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor." }
+            return { 
+              success: false, 
+              error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor.",
+              details: `Resposta recebida (início): ${rawResponse.substring(0, 200)}...`
+            }
           }
           
-          return { success: false, error: `Resposta inválida do servidor: ${e.message}` }
+          return { 
+            success: false, 
+            error: `Resposta inválida do servidor: ${e.message}`,
+            details: `Resposta completa: ${rawResponse}`
+          }
         }
 
         return { success: true, data: responseData }
       } catch (error) {
         console.error(`Erro ao verificar status da instância: ${error.message}`)
-        return { success: false, error: `Falha ao verificar status da instância: ${error.message}` }
+        return { 
+          success: false, 
+          error: `Falha ao verificar status da instância: ${error.message}`,
+          details: error.stack || JSON.stringify(error)
+        }
       }
     }
 
     async function getQRCode() {
       console.log(`Obtendo QR code da instância: ${instanceName}`)
       try {
+        console.log(`Enviando requisição para: ${EVOLUTION_API_URL}/instance/qrcode/${instanceName}`)
         const qrResponse = await fetch(`${EVOLUTION_API_URL}/instance/qrcode/${instanceName}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -186,16 +225,28 @@ serve(async (req) => {
           
           // Verificar se a resposta contém HTML ou outros erros
           if (rawResponse.includes('<!DOCTYPE') || rawResponse.includes('<html>')) {
-            return { success: false, error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor." }
+            return { 
+              success: false, 
+              error: "Servidor Evolution API retornou HTML ao invés de JSON. Verifique a URL e o acesso ao servidor.",
+              details: `Resposta recebida (início): ${rawResponse.substring(0, 200)}...`
+            }
           }
           
-          return { success: false, error: `Resposta inválida do servidor: ${e.message}` }
+          return { 
+            success: false, 
+            error: `Resposta inválida do servidor: ${e.message}`,
+            details: `Resposta completa: ${rawResponse}`
+          }
         }
 
         return { success: true, data: responseData }
       } catch (error) {
         console.error(`Erro ao obter QR code da instância: ${error.message}`)
-        return { success: false, error: `Falha ao obter QR code: ${error.message}` }
+        return { 
+          success: false, 
+          error: `Falha ao obter QR code: ${error.message}`,
+          details: error.stack || JSON.stringify(error)
+        }
       }
     }
 
@@ -207,7 +258,11 @@ serve(async (req) => {
           const createInstanceResult = await createInstance()
           if (!createInstanceResult.success) {
             return new Response(
-              JSON.stringify({ success: false, error: createInstanceResult.error }),
+              JSON.stringify({ 
+                success: false, 
+                error: createInstanceResult.error,
+                details: createInstanceResult.details
+              }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -216,7 +271,11 @@ serve(async (req) => {
           const connectResult = await connectInstance()
           if (!connectResult.success) {
             return new Response(
-              JSON.stringify({ success: false, error: connectResult.error }),
+              JSON.stringify({ 
+                success: false, 
+                error: connectResult.error,
+                details: connectResult.details
+              }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -250,7 +309,11 @@ serve(async (req) => {
         } catch (error) {
           console.error(`Erro ao processar conexão: ${error.message}`)
           return new Response(
-            JSON.stringify({ success: false, error: `Erro ao processar conexão: ${error.message}` }),
+            JSON.stringify({ 
+              success: false, 
+              error: `Erro ao processar conexão: ${error.message}`,
+              details: error.stack || JSON.stringify(error)
+            }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
           )
         }
@@ -416,7 +479,11 @@ serve(async (req) => {
   } catch (error) {
     console.error(`Erro geral: ${error.message}`)
     return new Response(
-      JSON.stringify({ success: false, error: `Erro interno: ${error.message}` }),
+      JSON.stringify({ 
+        success: false, 
+        error: `Erro interno: ${error.message}`,
+        details: error.stack || JSON.stringify(error)
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

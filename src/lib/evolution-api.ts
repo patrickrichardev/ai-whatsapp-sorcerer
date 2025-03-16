@@ -7,6 +7,7 @@ interface EvolutionAPIResponse {
   qrcode?: string;
   status?: string;
   error?: string;
+  details?: string;
 }
 
 export interface WhatsAppInstance {
@@ -47,7 +48,8 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
       console.error("Invalid response from Evolution API:", data)
       return {
         success: false,
-        error: "Resposta inválida da API"
+        error: "Resposta inválida da API",
+        details: JSON.stringify(data)
       }
     }
     
@@ -56,7 +58,8 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
     console.error("Evolution API Error:", error)
     return {
       success: false,
-      error: error.message || "Erro ao conectar com a Evolution API"
+      error: error.message || "Erro ao conectar com a Evolution API",
+      details: error.stack || JSON.stringify(error)
     }
   }
 }
@@ -93,7 +96,8 @@ export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPI
     console.error("Evolution API Error:", error)
     return {
       success: false,
-      error: error.message || "Erro ao verificar status da conexão"
+      error: error.message || "Erro ao verificar status da conexão",
+      details: error.stack || JSON.stringify(error)
     }
   }
 }
@@ -114,7 +118,8 @@ export async function sendWhatsAppMessage(phone: string, message: string): Promi
     console.error("Evolution API Error:", error)
     return {
       success: false,
-      error: error.message || "Erro ao enviar mensagem"
+      error: error.message || "Erro ao enviar mensagem",
+      details: error.stack || JSON.stringify(error)
     }
   }
 }
@@ -134,7 +139,8 @@ export async function disconnectWhatsAppInstance(agentId: string): Promise<Evolu
     console.error("Evolution API Error:", error)
     return {
       success: false,
-      error: error.message || "Erro ao desconectar instância"
+      error: error.message || "Erro ao desconectar instância",
+      details: error.stack || JSON.stringify(error)
     }
   }
 }
