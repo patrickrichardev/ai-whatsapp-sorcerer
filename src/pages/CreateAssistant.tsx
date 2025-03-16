@@ -20,12 +20,19 @@ interface Agent {
   created_at: string
 }
 
+interface FormData {
+  name: string
+  description: string
+  prompt: string
+  temperature: number
+}
+
 const CreateAssistant = () => {
   const [temperature, setTemperature] = useState([0.7])
   const [isLoading, setIsLoading] = useState(false)
   const [agents, setAgents] = useState<Agent[]>([])
   const { user } = useAuth()
-  const [formData, setFormData] = useState(AGENT_TEMPLATES.custom)
+  const [formData, setFormData] = useState<FormData>(AGENT_TEMPLATES.custom)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAgent, setEditingAgent] = useState<string | null>(null)
 
