@@ -23,6 +23,7 @@ const WhatsAppQR = () => {
   const [attempts, setAttempts] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [detailedErrors, setDetailedErrors] = useState<string[]>([])
+  const [apiResponse, setApiResponse] = useState<any>(null)
 
   const initializeConnection = async () => {
     if (!agentId) {
@@ -35,11 +36,14 @@ const WhatsAppQR = () => {
       setStatus("loading")
       setErrorMessage(null)
       setDetailedErrors([])
+      setApiResponse(null)
       console.log("Iniciando conexão para agente:", agentId)
       
       const response = await initializeWhatsAppInstance(agentId)
-
-      console.log("Resposta da função:", response)
+      console.log("Resposta da inicialização:", response)
+      
+      // Armazena a resposta completa para inspeção
+      setApiResponse(response)
       
       if (!response.success) {
         console.error("Error response:", response)
@@ -82,8 +86,10 @@ const WhatsAppQR = () => {
 
     try {
       const response = await checkWhatsAppStatus(agentId)
-
       console.log("Status check response:", response)
+
+      // Armazena a resposta completa para inspeção
+      setApiResponse(response)
 
       if (!response.success) {
         throw new Error(response.error || "Erro ao verificar status")
@@ -92,7 +98,7 @@ const WhatsAppQR = () => {
       if (response.status === "connected") {
         setStatus("connected")
         toast.success("WhatsApp conectado com sucesso!")
-        setTimeout(() => navigate("/connect-whatsapp"), 3000)
+        setTimeout(() => navigate("/devices"), 3000)
       } else if (response.qrcode && response.qrcode !== qrCode) {
         console.log("Novo QR Code recebido")
         setQrCode(response.qrcode)
@@ -176,6 +182,18 @@ const WhatsAppQR = () => {
               </ul>
               <div className="mt-2 text-sm">
                 Verifique se a Evolution API está configurada corretamente e acessível.
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {apiResponse && status === "error" && (
+          <Alert variant="default" className="mb-6 text-left bg-amber-50 dark:bg-amber-950 border-amber-300">
+            <AlertTriangle className="h-4 w-4 mr-2 text-amber-600" />
+            <AlertDescription>
+              <div className="font-semibold mb-2">Resposta da API:</div>
+              <div className="overflow-auto max-h-40 text-xs p-2 bg-black/10 rounded">
+                <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
               </div>
             </AlertDescription>
           </Alert>

@@ -29,27 +29,20 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
     
     if (error) {
       console.error("Supabase function error:", error)
-      throw error
+      return {
+        success: false,
+        error: `Erro na função do Supabase: ${error.message}`,
+        details: JSON.stringify(error)
+      }
     }
     
     console.log("Response from Evolution API:", data)
     
-    // Transformar o qr em qrcode para manter compatibilidade
-    if (data.qr) {
-      return {
-        success: true,
-        qrcode: data.qr,
-        status: data.status
-      }
-    }
-    
-    // Verificar se temos uma resposta completa
-    if (!data || (data && !data.success && !data.status && !data.qr && !data.error)) {
-      console.error("Invalid response from Evolution API:", data)
+    if (!data) {
       return {
         success: false,
-        error: "Resposta inválida da API",
-        details: JSON.stringify(data)
+        error: "Resposta vazia da API",
+        details: "A função retornou uma resposta vazia"
       }
     }
     
@@ -77,17 +70,20 @@ export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPI
     
     if (error) {
       console.error("Supabase function error:", error)
-      throw error
+      return {
+        success: false,
+        error: `Erro na função do Supabase: ${error.message}`,
+        details: JSON.stringify(error)
+      }
     }
     
     console.log("Status response from Evolution API:", data)
     
-    // Transformar o qr em qrcode para manter compatibilidade
-    if (data.qr) {
+    if (!data) {
       return {
-        success: true,
-        qrcode: data.qr,
-        status: data.status
+        success: false,
+        error: "Resposta vazia da API",
+        details: "A função retornou uma resposta vazia"
       }
     }
     
@@ -112,7 +108,15 @@ export async function sendWhatsAppMessage(phone: string, message: string): Promi
       }
     })
     
-    if (error) throw error
+    if (error) {
+      console.error("Supabase function error:", error)
+      return {
+        success: false,
+        error: `Erro na função do Supabase: ${error.message}`,
+        details: JSON.stringify(error)
+      }
+    }
+    
     return data
   } catch (error: any) {
     console.error("Evolution API Error:", error)
@@ -133,7 +137,15 @@ export async function disconnectWhatsAppInstance(agentId: string): Promise<Evolu
       }
     })
     
-    if (error) throw error
+    if (error) {
+      console.error("Supabase function error:", error)
+      return {
+        success: false,
+        error: `Erro na função do Supabase: ${error.message}`,
+        details: JSON.stringify(error)
+      }
+    }
+    
     return data
   } catch (error: any) {
     console.error("Evolution API Error:", error)
