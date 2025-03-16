@@ -17,6 +17,8 @@ export interface WhatsAppInstance {
 
 export async function initializeWhatsAppInstance(agentId: string): Promise<EvolutionAPIResponse> {
   try {
+    console.log("Initializing WhatsApp instance for agent:", agentId)
+    
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "connect", 
@@ -24,7 +26,12 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
       }
     })
     
-    if (error) throw error
+    if (error) {
+      console.error("Supabase function error:", error)
+      throw error
+    }
+    
+    console.log("Response from Evolution API:", data)
     
     // Transformar o qr em qrcode para manter compatibilidade
     if (data.qr) {
@@ -32,6 +39,15 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
         success: true,
         qrcode: data.qr,
         status: data.status
+      }
+    }
+    
+    // Verificar se temos uma resposta completa
+    if (!data || (data && !data.success && !data.status && !data.qr && !data.error)) {
+      console.error("Invalid response from Evolution API:", data)
+      return {
+        success: false,
+        error: "Resposta inválida da API"
       }
     }
     
@@ -47,6 +63,8 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
 
 export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPIResponse> {
   try {
+    console.log("Checking WhatsApp status for agent:", agentId)
+    
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "status", 
@@ -54,7 +72,12 @@ export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPI
       }
     })
     
-    if (error) throw error
+    if (error) {
+      console.error("Supabase function error:", error)
+      throw error
+    }
+    
+    console.log("Status response from Evolution API:", data)
     
     // Transformar o qr em qrcode para manter compatibilidade
     if (data.qr) {

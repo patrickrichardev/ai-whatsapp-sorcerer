@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
@@ -26,10 +25,13 @@ serve(async (req) => {
 
   try {
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+      console.error("Missing EVOLUTION_API_URL or EVOLUTION_API_KEY");
       throw new Error("Evolution API configuration is missing. Please set EVOLUTION_API_URL and EVOLUTION_API_KEY.");
     }
 
-    const { action, agent_id, phone, message } = await req.json() as RequestBody;
+    const requestData = await req.json() as RequestBody;
+    const { action, agent_id, phone, message } = requestData;
+    
     console.log(`Processing ${action} request`, { agent_id, phone });
 
     // Instance name based on agent ID (used to identify the WhatsApp instance)
@@ -72,79 +74,114 @@ serve(async (req) => {
 });
 
 async function connectInstance(instanceName: string) {
-  // First check if instance exists
-  const statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
-    headers: {
-      "apikey": EVOLUTION_API_KEY,
-      "Content-Type": "application/json"
+  try {
+    console.log(`Connecting instance: ${instanceName}`);
+    console.log(`Evolution API URL: ${EVOLUTION_API_URL}`);
+    
+    // First check if instance exists
+    const statusResponse = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
+      headers: {
+        "apikey": EVOLUTION_API_KEY,
+        "Content-Type": "application/json"
+      }
+    });
+    
+    const statusData = await statusResponse.json();
+    console.log("Instance status:", statusData);
+    
+    // If instance exists and connected, return status
+    if (statusResponse.ok && statusData.state === "open") {
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          status: "connected"
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
     }
-  });
-  
-  const statusData = await statusResponse.json();
-  console.log("Instance status:", statusData);
-  
-  // If instance exists and connected, return status
-  if (statusResponse.ok && statusData.state === "open") {
+    
+    // Create instance if it doesn't exist
+    if (!statusResponse.ok || statusData.state === "close") {
+      console.log("Creating new instance");
+      // Try to create the instance
+      const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+        method: "POST",
+        headers: {
+          "apikey": EVOLUTION_API_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          instanceName,
+          token: instanceName,
+          qrcode: true
+        })
+      });
+      
+      if (!createResponse.ok) {
+        const createData = await createResponse.json();
+        console.error("Create instance failed:", createData);
+        throw new Error(`Failed to create instance: ${createData.error || createData.message || JSON.stringify(createData)}`);
+      }
+      
+      console.log("Instance created successfully");
+      
+      // Connect to the instance
+      const connectResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
+        method: "POST",
+        headers: {
+          "apikey": EVOLUTION_API_KEY,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!connectResponse.ok) {
+        const connectData = await connectResponse.json();
+        console.error("Connect instance failed:", connectData);
+        throw new Error(`Failed to connect to instance: ${connectData.error || connectData.message || JSON.stringify(connectData)}`);
+      }
+      
+      console.log("Instance connected successfully");
+    }
+    
+    // Get QR code
+    console.log("Fetching QR code");
+    const qrResponse = await fetch(`${EVOLUTION_API_URL}/instance/qrcode/${instanceName}`, {
+      headers: {
+        "apikey": EVOLUTION_API_KEY,
+        "Content-Type": "application/json"
+      }
+    });
+    
+    if (!qrResponse.ok) {
+      const qrData = await qrResponse.json();
+      console.error("Get QR code failed:", qrData);
+      throw new Error(`Failed to get QR code: ${qrData.error || qrData.message || JSON.stringify(qrData)}`);
+    }
+    
+    const qrData = await qrResponse.json();
+    console.log("QR code fetched successfully");
+    
+    if (!qrData.qrcode) {
+      console.error("No QR code in response:", qrData);
+      throw new Error("QR code not available");
+    }
+    
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        status: "connected"
+      JSON.stringify({
+        success: true,
+        qr: qrData.qrcode,
+        status: "awaiting_scan"
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
+  } catch (error) {
+    console.error("Error in connectInstance:", error);
+    throw error;
   }
-  
-  // Create instance if it doesn't exist
-  if (!statusResponse.ok || statusData.state === "close") {
-    // Try to create the instance
-    const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
-      method: "POST",
-      headers: {
-        "apikey": EVOLUTION_API_KEY,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        instanceName,
-        token: EVOLUTION_API_KEY,
-        qrcode: true
-      })
-    });
-    
-    const createData = await createResponse.json();
-    console.log("Create instance response:", createData);
-    
-    if (!createResponse.ok) {
-      throw new Error(`Failed to create instance: ${createData.error || createData.message || "Unknown error"}`);
-    }
-  }
-  
-  // Get QR code
-  const qrResponse = await fetch(`${EVOLUTION_API_URL}/instance/qrcode/${instanceName}`, {
-    headers: {
-      "apikey": EVOLUTION_API_KEY,
-      "Content-Type": "application/json"
-    }
-  });
-  
-  const qrData = await qrResponse.json();
-  console.log("QR code response status:", qrResponse.status);
-  
-  if (!qrResponse.ok) {
-    throw new Error(`Failed to get QR code: ${qrData.error || qrData.message || "Unknown error"}`);
-  }
-  
-  return new Response(
-    JSON.stringify({
-      success: true,
-      qr: qrData.qrcode,
-      status: "awaiting_scan"
-    }),
-    { 
-      headers: { ...corsHeaders, "Content-Type": "application/json" } 
-    }
-  );
 }
 
 async function checkInstanceStatus(instanceName: string) {

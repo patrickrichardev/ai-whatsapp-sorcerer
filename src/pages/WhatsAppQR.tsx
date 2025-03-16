@@ -20,6 +20,7 @@ const WhatsAppQR = () => {
   const [status, setStatus] = useState<ConnectionStatus>("loading")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [attempts, setAttempts] = useState(0)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const initializeConnection = async () => {
     if (!agentId) {
@@ -30,6 +31,7 @@ const WhatsAppQR = () => {
 
     try {
       setStatus("loading")
+      setErrorMessage(null)
       console.log("Iniciando conexão para agente:", agentId)
       
       const response = await initializeWhatsAppInstance(agentId)
@@ -49,11 +51,13 @@ const WhatsAppQR = () => {
       } else {
         console.error("Resposta inesperada:", response)
         setStatus("error")
+        setErrorMessage("Resposta inesperada do servidor")
         toast.error("Erro ao gerar QR code")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao iniciar conexão:", error)
       setStatus("error")
+      setErrorMessage(error.message || "Erro desconhecido")
       toast.error("Erro ao iniciar conexão")
     }
   }
@@ -79,7 +83,7 @@ const WhatsAppQR = () => {
         setQrCode(response.qrcode)
         setStatus("awaiting_scan")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao verificar status:", error)
     }
   }
@@ -131,7 +135,7 @@ const WhatsAppQR = () => {
               </>
             )}
             {status === "connected" && "Redirecionando..."}
-            {status === "error" && "Não foi possível estabelecer a conexão"}
+            {status === "error" && (errorMessage || "Não foi possível estabelecer a conexão")}
           </p>
         </div>
 
