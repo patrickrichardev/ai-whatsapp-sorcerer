@@ -1,35 +1,83 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { QrCode, Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
+import { QrCode, Loader2, CheckCircle2, XCircle, AlertTriangle, Wifi, WifiOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import { 
   initializeWhatsAppInstance, 
-  checkWhatsAppStatus 
+  checkWhatsAppStatus,
+  testEvolutionAPIConnection
 } from "@/lib/evolution-api"
 
-type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error";
+type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection";
 
 const WhatsAppQR = () => {
   const [searchParams] = useSearchParams()
   const agentId = searchParams.get("agent_id")
   const navigate = useNavigate()
   const [qrCode, setQrCode] = useState<string | null>(null)
-  const [status, setStatus] = useState<ConnectionStatus>("loading")
+  const [status, setStatus] = useState<ConnectionStatus>("testing_connection")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [detailedErrors, setDetailedErrors] = useState<string[]>([])
   const [apiResponse, setApiResponse] = useState<any>(null)
+  const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
+
+  // Testar a conexão com a Evolution API antes de tudo
+  const testConnection = async () => {
+    try {
+      setStatus("testing_connection")
+      setConnectionOk(null)
+      
+      console.log("Testando conexão com a Evolution API")
+      const response = await testEvolutionAPIConnection()
+      
+      console.log("Teste de conexão:", response)
+      setApiResponse(response)
+      
+      if (!response.success) {
+        console.error("Falha no teste de conexão:", response)
+        setConnectionOk(false)
+        setErrorMessage(response.error || "Não foi possível conectar à Evolution API")
+        
+        const errors = []
+        if (response.error) errors.push(response.error)
+        if (response.details) errors.push(response.details)
+        if (response.diagnostics) errors.push(JSON.stringify(response.diagnostics))
+        setDetailedErrors(errors.filter(Boolean))
+        
+        toast.error("Erro de conexão com a Evolution API")
+        return false
+      }
+      
+      setConnectionOk(true)
+      toast.success("Conexão com a Evolution API estabelecida")
+      return true
+    } catch (error: any) {
+      console.error("Erro ao testar conexão:", error)
+      setConnectionOk(false)
+      setErrorMessage(error.message || "Erro desconhecido ao testar conexão")
+      setDetailedErrors([`Detalhes técnicos: ${JSON.stringify(error)}`])
+      toast.error("Erro ao testar conexão")
+      return false
+    }
+  }
 
   const initializeConnection = async () => {
     if (!agentId) {
       toast.error("ID do agente não fornecido")
       navigate("/connect-whatsapp")
       return
+    }
+
+    // Se ainda não testamos a conexão ou o teste falhou, teste primeiro
+    if (connectionOk === null || connectionOk === false) {
+      const connected = await testConnection()
+      if (!connected) return
     }
 
     try {
@@ -54,6 +102,7 @@ const WhatsAppQR = () => {
         const errors = []
         if (response.error) errors.push(response.error)
         if (response.details) errors.push(response.details)
+        if (response.diagnostics) errors.push(`Diagnóstico API: ${JSON.stringify(response.diagnostics)}`)
         setDetailedErrors(errors.filter(Boolean))
         
         toast.error("Erro ao conectar com Evolution API")
@@ -82,7 +131,7 @@ const WhatsAppQR = () => {
   }
 
   const checkStatus = async () => {
-    if (!agentId || status === "connected") return
+    if (!agentId || status === "connected" || status === "testing_connection") return
 
     try {
       const response = await checkWhatsAppStatus(agentId)
@@ -110,7 +159,12 @@ const WhatsAppQR = () => {
   }
 
   useEffect(() => {
-    initializeConnection()
+    testConnection().then(connected => {
+      if (connected) {
+        initializeConnection()
+      }
+    })
+    
     const interval = setInterval(checkStatus, 5000)
     return () => clearInterval(interval)
   }, [agentId])
@@ -123,6 +177,9 @@ const WhatsAppQR = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
+    if (status === "error" && (connectionOk === null || connectionOk === false)) {
+      await testConnection()
+    }
     await initializeConnection()
     setIsRefreshing(false)
   }
@@ -134,6 +191,7 @@ const WhatsAppQR = () => {
       <Card className="p-8 text-center">
         <div className="mb-6">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            {status === "testing_connection" && <Wifi className="w-8 h-8 text-amber-500 animate-pulse" />}
             {status === "loading" && <Loader2 className="w-8 h-8 text-primary animate-spin" />}
             {status === "awaiting_scan" && <QrCode className="w-8 h-8 text-primary" />}
             {status === "connected" && <CheckCircle2 className="w-8 h-8 text-green-500" />}
@@ -141,6 +199,7 @@ const WhatsAppQR = () => {
           </div>
           
           <h2 className="text-2xl font-semibold mb-2">
+            {status === "testing_connection" && "Testando conexão com a API..."}
             {status === "loading" && "Iniciando conexão..."}
             {status === "awaiting_scan" && "Escaneie o QR Code"}
             {status === "connected" && "WhatsApp Conectado!"}
@@ -148,6 +207,7 @@ const WhatsAppQR = () => {
           </h2>
           
           <p className="text-muted-foreground mb-6">
+            {status === "testing_connection" && "Verificando se a Evolution API está acessível..."}
             {status === "loading" && "Aguarde enquanto preparamos seu QR code"}
             {status === "awaiting_scan" && (
               <>
@@ -159,6 +219,25 @@ const WhatsAppQR = () => {
             {status === "error" && (errorMessage || "Não foi possível estabelecer a conexão")}
           </p>
         </div>
+
+        {connectionOk === false && (
+          <Alert className="mb-6 bg-yellow-50 dark:bg-yellow-950 border-yellow-300 text-left">
+            <Wifi className="h-4 w-4 mr-2 text-yellow-600" />
+            <AlertDescription>
+              <div className="font-semibold mb-2">Problemas de conexão com a Evolution API</div>
+              <p className="text-sm">
+                Não foi possível estabelecer conexão com o servidor da Evolution API. 
+                Verifique se:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-sm mt-2">
+                <li>O servidor da Evolution API está em execução</li>
+                <li>A URL configurada está correta</li>
+                <li>A chave de API está correta</li>
+                <li>Não há bloqueios de firewall ou rede</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {status === "awaiting_scan" && qrCode && (
           <div className="aspect-square max-w-[300px] mx-auto mb-6 bg-white p-4 rounded-lg">
@@ -199,9 +278,9 @@ const WhatsAppQR = () => {
           </Alert>
         )}
 
-        {(status === "awaiting_scan" || status === "error") && (
+        {(status === "awaiting_scan" || status === "error" || (status === "testing_connection" && connectionOk === false)) && (
           <Button
-            variant="outline"
+            variant={status === "error" ? "destructive" : "outline"}
             className="mx-auto"
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -209,10 +288,10 @@ const WhatsAppQR = () => {
             {isRefreshing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Atualizando...
+                {status === "testing_connection" ? "Testando..." : "Atualizando..."}
               </>
             ) : (
-              "Atualizar QR Code"
+              status === "testing_connection" ? "Testar Novamente" : "Atualizar QR Code"
             )}
           </Button>
         )}

@@ -8,12 +8,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Configure aqui a URL do seu servidor Evolution API
-const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL') || 'https://evolutionapi-evolution-api.nqfltx.easypanel.host'
-const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY') || '429683C4C977415CAAFCCE10F7D57E11'
+// Obtenha as variáveis de ambiente
+const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL') || ''
+const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY') || ''
 
 console.log(`Usando EVOLUTION_API_URL: ${EVOLUTION_API_URL}`)
-console.log(`Usando EVOLUTION_API_KEY: ${EVOLUTION_API_KEY.substring(0, 5)}...`)
+console.log(`Usando EVOLUTION_API_KEY (primeiros 5 caracteres): ${EVOLUTION_API_KEY.substring(0, 5)}...`)
+
+if (!EVOLUTION_API_URL) {
+  console.error("EVOLUTION_API_URL não está configurada!")
+}
+
+if (!EVOLUTION_API_KEY) {
+  console.error("EVOLUTION_API_KEY não está configurada!")
+}
 
 serve(async (req) => {
   // Tratamento de requisições OPTIONS (CORS preflight)
@@ -36,9 +44,24 @@ serve(async (req) => {
     // Obtém dados da requisição
     const requestData = await req.json()
     const { action, agent_id, phone, message } = requestData
-    console.log(`Processando action: ${action}, agent_id: ${agent_id}`)
+    console.log(`Processando action: ${action}, agent_id: ${agent_id || "N/A"}`)
 
-    if (!agent_id && action !== 'send') {
+    // Validação básica de URL e API key
+    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Configuração incompleta. EVOLUTION_API_URL ou EVOLUTION_API_KEY não configurados.", 
+          diagnostics: {
+            apiUrl: EVOLUTION_API_URL ? "Configurada" : "Não configurada",
+            apiKey: EVOLUTION_API_KEY ? "Configurada" : "Não configurada"
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
+
+    if (!agent_id && action !== 'send' && action !== 'test_connection') {
       return new Response(
         JSON.stringify({ success: false, error: "ID do agente não fornecido" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -46,7 +69,7 @@ serve(async (req) => {
     }
 
     // Nome da instância baseado no ID do agente
-    const instanceName = `agent_${agent_id}`
+    const instanceName = agent_id ? `agent_${agent_id}` : "test_instance"
 
     // Funções auxiliares para lidar com as chamadas à Evolution API
     async function fetchWithErrorHandling(url, options = {}) {
@@ -54,43 +77,109 @@ serve(async (req) => {
       
       try {
         // Adiciona timeout para evitar requisições pendentes infinitas
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout: A requisição excedeu o tempo limite de 10 segundos')), 10000)
-        );
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos
         
-        const fetchPromise = fetch(url, options);
+        const fetchOptions = {
+          ...options,
+          signal: controller.signal
+        };
         
-        // Race entre o fetch e o timeout
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        const response = await fetch(url, fetchOptions);
+        clearTimeout(timeoutId);
         
         // Registra o status da resposta
         console.log(`Resposta recebida com status: ${response.status}`);
         
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+          console.error(`Erro HTTP ${response.status}: ${errorText}`);
+          
+          return { 
+            success: false, 
+            error: `Erro HTTP ${response.status}`, 
+            details: errorText,
+            diagnostics: {
+              apiUrl: url,
+              requestData: options.body ? JSON.parse(options.body) : null,
+              responseStatus: response.status
+            }
+          };
         }
         
         // Tenta processar como JSON
         const text = await response.text();
         
+        // Se o texto estiver vazio, retorna erro
+        if (!text.trim()) {
+          return { 
+            success: false, 
+            error: "Resposta vazia da API", 
+            diagnostics: {
+              apiUrl: url,
+              requestData: options.body ? JSON.parse(options.body) : null,
+              responseStatus: response.status
+            }
+          };
+        }
+        
         // Verifica se o texto é HTML
         if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-          throw new Error("A resposta recebida é HTML e não JSON. Verifique a URL da API.");
+          console.error("A resposta recebida é HTML e não JSON:");
+          console.error(text.substring(0, 200) + "...");
+          
+          return { 
+            success: false, 
+            error: "A resposta recebida é HTML e não JSON. Verifique a URL da API.", 
+            details: text.substring(0, 500),
+            diagnostics: {
+              apiUrl: url,
+              requestData: options.body ? JSON.parse(options.body) : null,
+              responseStatus: response.status
+            }
+          };
         }
         
         try {
           return { success: true, data: JSON.parse(text) };
         } catch (e) {
-          console.log(`Resposta não-JSON recebida: ${text.substring(0, 200)}...`);
-          throw new Error(`Não foi possível processar a resposta como JSON: ${e.message}`);
+          console.error(`Erro ao processar JSON: ${e.message}`);
+          console.error(`Resposta não-JSON recebida: ${text.substring(0, 200)}...`);
+          
+          return { 
+            success: false, 
+            error: `Não foi possível processar a resposta como JSON: ${e.message}`, 
+            details: text.substring(0, 500),
+            diagnostics: {
+              apiUrl: url,
+              requestData: options.body ? JSON.parse(options.body) : null,
+              responseStatus: response.status
+            }
+          };
         }
       } catch (error) {
         console.error(`Erro na requisição: ${error.message}`);
+        
+        // Verifica se foi timeout
+        if (error.name === 'AbortError') {
+          return { 
+            success: false, 
+            error: "Timeout: A requisição excedeu o tempo limite de 8 segundos",
+            diagnostics: {
+              apiUrl: url,
+              requestData: options.body ? JSON.parse(options.body) : null
+            }
+          };
+        }
+        
         return { 
           success: false, 
           error: error.message,
-          details: `URL: ${url}, Método: ${options.method || 'GET'}`
+          details: `URL: ${url}, Método: ${options.method || 'GET'}`,
+          diagnostics: {
+            apiUrl: url,
+            requestData: options.body ? JSON.parse(options.body) : null
+          }
         };
       }
     }
@@ -106,7 +195,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           instanceName,
-          token: agent_id,
+          token: agent_id || "test_token",
           qrcode: true
         })
       });
@@ -146,19 +235,47 @@ serve(async (req) => {
       });
     }
 
+    async function testApiConnection() {
+      console.log(`Testando conexão com a API Evolution`);
+
+      // Primeiro, vamos tentar uma requisição GET simples para verificar se a API está acessível
+      return await fetchWithErrorHandling(`${EVOLUTION_API_URL}/instance/info`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY
+        }
+      });
+    }
+
     // Processar a ação solicitada
     switch (action) {
+      case 'test_connection': {
+        const testResult = await testApiConnection();
+        
+        if (!testResult.success) {
+          return new Response(
+            JSON.stringify(testResult),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: "Conexão com a Evolution API estabelecida com sucesso",
+            details: testResult.data
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case 'connect': {
         try {
           // Tentar criar a instância
           const createInstanceResult = await createInstance()
           if (!createInstanceResult.success) {
             return new Response(
-              JSON.stringify({ 
-                success: false, 
-                error: createInstanceResult.error,
-                details: createInstanceResult.details
-              }),
+              JSON.stringify(createInstanceResult),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -167,11 +284,7 @@ serve(async (req) => {
           const connectResult = await connectInstance()
           if (!connectResult.success) {
             return new Response(
-              JSON.stringify({ 
-                success: false, 
-                error: connectResult.error,
-                details: connectResult.details
-              }),
+              JSON.stringify(connectResult),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -221,7 +334,7 @@ serve(async (req) => {
           const statusResult = await checkInstanceStatus()
           if (!statusResult.success) {
             return new Response(
-              JSON.stringify({ success: false, error: statusResult.error }),
+              JSON.stringify(statusResult),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -249,7 +362,7 @@ serve(async (req) => {
           const qrCodeResult = await getQRCode()
           if (!qrCodeResult.success) {
             return new Response(
-              JSON.stringify({ success: false, error: qrCodeResult.error }),
+              JSON.stringify(qrCodeResult),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -300,13 +413,13 @@ serve(async (req) => {
 
           if (!sendResponse.success) {
             return new Response(
-              JSON.stringify({ success: false, error: sendResponse.error }),
+              JSON.stringify(sendResponse),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
 
           return new Response(
-            JSON.stringify({ success: true }),
+            JSON.stringify({ success: true, message: "Mensagem enviada com sucesso" }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         } catch (error) {
@@ -330,7 +443,7 @@ serve(async (req) => {
 
           if (!logoutResult.success) {
             return new Response(
-              JSON.stringify({ success: false, error: logoutResult.error }),
+              JSON.stringify(logoutResult),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
@@ -345,7 +458,7 @@ serve(async (req) => {
 
           if (!deleteResult.success) {
             return new Response(
-              JSON.stringify({ success: false, error: deleteResult.error }),
+              JSON.stringify(deleteResult),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
             )
           }
