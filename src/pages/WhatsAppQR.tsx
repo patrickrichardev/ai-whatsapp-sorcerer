@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { QrCode, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { QrCode, Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import { 
   initializeWhatsAppInstance, 
@@ -21,6 +22,7 @@ const WhatsAppQR = () => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [detailedErrors, setDetailedErrors] = useState<string[]>([])
 
   const initializeConnection = async () => {
     if (!agentId) {
@@ -32,15 +34,26 @@ const WhatsAppQR = () => {
     try {
       setStatus("loading")
       setErrorMessage(null)
+      setDetailedErrors([])
       console.log("Iniciando conexão para agente:", agentId)
       
       const response = await initializeWhatsAppInstance(agentId)
 
       console.log("Resposta da função:", response)
-
+      
       if (!response.success) {
         console.error("Error response:", response)
-        throw new Error(response.error || "Erro desconhecido ao iniciar conexão")
+        setStatus("error")
+        setErrorMessage(response.error || "Erro desconhecido ao iniciar conexão")
+        
+        // Adiciona mensagens detalhadas de erro para ajudar na depuração
+        const errors = []
+        if (response.error) errors.push(response.error)
+        if (response.details) errors.push(response.details)
+        setDetailedErrors(errors.filter(Boolean))
+        
+        toast.error("Erro ao conectar com Evolution API")
+        return
       }
 
       if (response.qrcode) {
@@ -59,6 +72,7 @@ const WhatsAppQR = () => {
       console.error("Erro ao iniciar conexão:", error)
       setStatus("error")
       setErrorMessage(error.message || "Erro desconhecido")
+      setDetailedErrors([`Detalhes técnicos: ${JSON.stringify(error)}`])
       toast.error("Erro ao iniciar conexão")
     }
   }
@@ -148,6 +162,23 @@ const WhatsAppQR = () => {
               className="w-full h-full"
             />
           </div>
+        )}
+
+        {status === "error" && detailedErrors.length > 0 && (
+          <Alert variant="destructive" className="mb-6 text-left">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertDescription>
+              <div className="font-semibold mb-2">Detalhes do erro:</div>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {detailedErrors.map((err, index) => (
+                  <li key={index}>{err}</li>
+                ))}
+              </ul>
+              <div className="mt-2 text-sm">
+                Verifique se a Evolution API está configurada corretamente e acessível.
+              </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         {(status === "awaiting_scan" || status === "error") && (
