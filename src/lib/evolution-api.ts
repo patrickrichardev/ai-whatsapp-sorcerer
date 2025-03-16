@@ -28,10 +28,6 @@ export async function testEvolutionAPIConnection(): Promise<EvolutionAPIResponse
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "test_connection"
-      },
-      // Set a timeout to avoid hanging requests
-      options: {
-        timeout: 10000 // 10 seconds
       }
     })
     
@@ -73,10 +69,6 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
       body: { 
         action: "connect", 
         agent_id: agentId 
-      },
-      // Set a timeout to avoid hanging requests
-      options: {
-        timeout: 15000 // 15 seconds
       }
     })
     
@@ -118,10 +110,6 @@ export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPI
       body: { 
         action: "status", 
         agent_id: agentId 
-      },
-      // Set a timeout to avoid hanging requests
-      options: {
-        timeout: 10000 // 10 seconds
       }
     })
     
@@ -162,10 +150,6 @@ export async function sendWhatsAppMessage(phone: string, message: string): Promi
         action: "send", 
         phone, 
         message
-      },
-      // Set a timeout to avoid hanging requests
-      options: {
-        timeout: 10000 // 10 seconds
       }
     })
     
@@ -195,10 +179,6 @@ export async function disconnectWhatsAppInstance(agentId: string): Promise<Evolu
       body: { 
         action: "disconnect", 
         agent_id: agentId 
-      },
-      // Set a timeout to avoid hanging requests
-      options: {
-        timeout: 10000 // 10 seconds
       }
     })
     
