@@ -1,16 +1,17 @@
-
-import { useEffect, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
-import { QrCode, Loader2, CheckCircle2, XCircle, AlertTriangle, Wifi, WifiOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { QrCode, Loader2, CheckCircle2, XCircle, AlertTriangle, Wifi, WifiOff, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { 
   initializeWhatsAppInstance, 
   checkWhatsAppStatus,
   testEvolutionAPIConnection
-} from "@/lib/evolution-api"
+} from "@/lib/evolution-api";
+import { APICredentialsForm } from "@/components/credentials/APICredentialsForm";
 
 type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection";
 
@@ -26,8 +27,8 @@ const WhatsAppQR = () => {
   const [detailedErrors, setDetailedErrors] = useState<string[]>([])
   const [apiResponse, setApiResponse] = useState<any>(null)
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
+  const [showCredentialsForm, setShowCredentialsForm] = useState(false)
 
-  // Testar a conexão com a Evolution API antes de tudo
   const testConnection = async () => {
     try {
       setStatus("testing_connection")
@@ -74,7 +75,6 @@ const WhatsAppQR = () => {
       return
     }
 
-    // Se ainda não testamos a conexão ou o teste falhou, teste primeiro
     if (connectionOk === null || connectionOk === false) {
       const connected = await testConnection()
       if (!connected) return
@@ -90,7 +90,6 @@ const WhatsAppQR = () => {
       const response = await initializeWhatsAppInstance(agentId)
       console.log("Resposta da inicialização:", response)
       
-      // Armazena a resposta completa para inspeção
       setApiResponse(response)
       
       if (!response.success) {
@@ -98,7 +97,6 @@ const WhatsAppQR = () => {
         setStatus("error")
         setErrorMessage(response.error || "Erro desconhecido ao iniciar conexão")
         
-        // Adiciona mensagens detalhadas de erro para ajudar na depuração
         const errors = []
         if (response.error) errors.push(response.error)
         if (response.details) errors.push(response.details)
@@ -137,7 +135,6 @@ const WhatsAppQR = () => {
       const response = await checkWhatsAppStatus(agentId)
       console.log("Status check response:", response)
 
-      // Armazena a resposta completa para inspeção
       setApiResponse(response)
 
       if (!response.success) {
@@ -182,6 +179,15 @@ const WhatsAppQR = () => {
     }
     await initializeConnection()
     setIsRefreshing(false)
+  }
+
+  const handleCredentialsSuccess = () => {
+    setShowCredentialsForm(false)
+    testConnection().then(connected => {
+      if (connected) {
+        initializeConnection();
+      }
+    });
   }
 
   return (
@@ -235,6 +241,19 @@ const WhatsAppQR = () => {
                 <li>A chave de API está correta</li>
                 <li>Não há bloqueios de firewall ou rede</li>
               </ul>
+              <div className="mt-3">
+                <Dialog open={showCredentialsForm} onOpenChange={setShowCredentialsForm}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="mt-2">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Atualizar Credenciais
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <APICredentialsForm onSuccess={handleCredentialsSuccess} />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -278,23 +297,35 @@ const WhatsAppQR = () => {
           </Alert>
         )}
 
-        {(status === "awaiting_scan" || status === "error" || (status === "testing_connection" && connectionOk === false)) && (
-          <Button
-            variant={status === "error" ? "destructive" : "outline"}
-            className="mx-auto"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {status === "testing_connection" ? "Testando..." : "Atualizando..."}
-              </>
-            ) : (
-              status === "testing_connection" ? "Testar Novamente" : "Atualizar QR Code"
-            )}
-          </Button>
-        )}
+        <div className="flex justify-center space-x-3">
+          {(status === "awaiting_scan" || status === "error" || (status === "testing_connection" && connectionOk === false)) && (
+            <Button
+              variant={status === "error" ? "destructive" : "outline"}
+              className="mx-auto"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {status === "testing_connection" ? "Testando..." : "Atualizando..."}
+                </>
+              ) : (
+                status === "testing_connection" ? "Testar Novamente" : "Atualizar QR Code"
+              )}
+            </Button>
+          )}
+          
+          {(status === "error" || connectionOk === false) && (
+            <Button
+              variant="outline"
+              onClick={() => setShowCredentialsForm(true)}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configurar API
+            </Button>
+          )}
+        </div>
       </Card>
     </div>
   )
