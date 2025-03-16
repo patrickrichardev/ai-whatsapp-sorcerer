@@ -15,6 +15,7 @@ import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
+import { sendWhatsAppMessage } from "@/lib/evolution-api"
 
 interface ChatMainProps {
   chat: Chat
@@ -91,16 +92,15 @@ export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
 
     setIsLoading(true)
     try {
-      // Enviar mensagem via WhatsApp
-      const { error: whatsappError } = await supabase.functions.invoke('whatsapp-connection', {
-        body: { 
-          action: 'send',
-          phone: chat.customer_phone,
-          message: message.trim()
-        }
-      })
+      // Enviar mensagem via WhatsApp usando a Evolution API
+      const response = await sendWhatsAppMessage(
+        chat.customer_phone,
+        message.trim()
+      )
 
-      if (whatsappError) throw whatsappError
+      if (!response.success) {
+        throw new Error(response.error || "Erro ao enviar mensagem")
+      }
 
       // Salvar mensagem no banco
       const { error: dbError } = await supabase
@@ -202,7 +202,7 @@ export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
             placeholder="Digite uma mensagem..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
             className="flex-1"
           />
           <Button 

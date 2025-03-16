@@ -1,0 +1,3 @@
+
+[functions.evolution-integration]
+verify_jwt = true

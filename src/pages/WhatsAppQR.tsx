@@ -4,15 +4,20 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { QrCode, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
+import { 
+  initializeWhatsAppInstance, 
+  checkWhatsAppStatus 
+} from "@/lib/evolution-api"
+
+type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error";
 
 const WhatsAppQR = () => {
   const [searchParams] = useSearchParams()
   const agentId = searchParams.get("agent_id")
   const navigate = useNavigate()
   const [qrCode, setQrCode] = useState<string | null>(null)
-  const [status, setStatus] = useState<"loading" | "awaiting_scan" | "connected" | "error">("loading")
+  const [status, setStatus] = useState<ConnectionStatus>("loading")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [attempts, setAttempts] = useState(0)
 
@@ -27,25 +32,22 @@ const WhatsAppQR = () => {
       setStatus("loading")
       console.log("Iniciando conexão para agente:", agentId)
       
-      const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
-        body: { action: "connect", agent_id: agentId }
-      })
+      const response = await initializeWhatsAppInstance(agentId)
 
-      console.log("Resposta da função:", data)
+      console.log("Resposta da função:", response)
 
-      if (error) {
-        console.error("Erro na função:", error)
-        throw error
+      if (!response.success) {
+        throw new Error(response.error || "Erro desconhecido ao iniciar conexão")
       }
 
-      if (data.qr) {
-        console.log("QR Code recebido, tamanho:", data.qr.length)
-        setQrCode(data.qr)
+      if (response.qrcode) {
+        console.log("QR Code recebido, tamanho:", response.qrcode.length)
+        setQrCode(response.qrcode)
         setStatus("awaiting_scan")
-      } else if (data.status === "connected") {
+      } else if (response.status === "connected") {
         setStatus("connected")
       } else {
-        console.error("Resposta inesperada:", data)
+        console.error("Resposta inesperada:", response)
         setStatus("error")
         toast.error("Erro ao gerar QR code")
       }
@@ -60,21 +62,21 @@ const WhatsAppQR = () => {
     if (!agentId || status === "connected") return
 
     try {
-      const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
-        body: { action: "status", agent_id: agentId }
-      })
+      const response = await checkWhatsAppStatus(agentId)
 
-      console.log("Status check response:", data)
+      console.log("Status check response:", response)
 
-      if (error) throw error
+      if (!response.success) {
+        throw new Error(response.error || "Erro ao verificar status")
+      }
 
-      if (data.status === "connected") {
+      if (response.status === "connected") {
         setStatus("connected")
         toast.success("WhatsApp conectado com sucesso!")
         setTimeout(() => navigate("/connect-whatsapp"), 3000)
-      } else if (data.qr && data.qr !== qrCode) {
+      } else if (response.qrcode && response.qrcode !== qrCode) {
         console.log("Novo QR Code recebido")
-        setQrCode(data.qr)
+        setQrCode(response.qrcode)
         setStatus("awaiting_scan")
       }
     } catch (error) {
