@@ -10,6 +10,7 @@ import {
   LogOut,
   MessagesSquare,
   Bot,
+  Smartphone
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
@@ -31,9 +32,9 @@ const navigation = [
     icon: Bot,
   },
   {
-    name: "Conectar Agente",
-    href: "/connect-whatsapp",
-    icon: MessageSquare,
+    name: "Dispositivos",
+    href: "/devices",
+    icon: Smartphone,
   },
   {
     name: "Configurações",
