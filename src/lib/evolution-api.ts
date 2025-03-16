@@ -25,6 +25,16 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
     })
     
     if (error) throw error
+    
+    // Transformar o qr em qrcode para manter compatibilidade
+    if (data.qr) {
+      return {
+        success: true,
+        qrcode: data.qr,
+        status: data.status
+      }
+    }
+    
     return data
   } catch (error: any) {
     console.error("Evolution API Error:", error)
@@ -45,6 +55,16 @@ export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPI
     })
     
     if (error) throw error
+    
+    // Transformar o qr em qrcode para manter compatibilidade
+    if (data.qr) {
+      return {
+        success: true,
+        qrcode: data.qr,
+        status: data.status
+      }
+    }
+    
     return data
   } catch (error: any) {
     console.error("Evolution API Error:", error)
