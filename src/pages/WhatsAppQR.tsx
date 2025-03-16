@@ -39,6 +39,7 @@ const WhatsAppQR = () => {
       console.log("Resposta da função:", response)
 
       if (!response.success) {
+        console.error("Error response:", response)
         throw new Error(response.error || "Erro desconhecido ao iniciar conexão")
       }
 
