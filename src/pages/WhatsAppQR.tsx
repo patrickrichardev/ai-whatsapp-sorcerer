@@ -107,9 +107,9 @@ const WhatsAppQR = () => {
         return
       }
 
-      if (response.qrcode) {
-        console.log("QR Code recebido, tamanho:", response.qrcode.length)
-        setQrCode(response.qrcode)
+      if (response.qr || response.qrcode) {
+        console.log("QR Code recebido, tamanho:", (response.qr || response.qrcode).length)
+        setQrCode(response.qr || response.qrcode)
         setStatus("awaiting_scan")
       } else if (response.status === "connected") {
         setStatus("connected")
@@ -145,9 +145,9 @@ const WhatsAppQR = () => {
         setStatus("connected")
         toast.success("WhatsApp conectado com sucesso!")
         setTimeout(() => navigate("/devices"), 3000)
-      } else if (response.qrcode && response.qrcode !== qrCode) {
+      } else if ((response.qr || response.qrcode) && (response.qr || response.qrcode) !== qrCode) {
         console.log("Novo QR Code recebido")
-        setQrCode(response.qrcode)
+        setQrCode(response.qr || response.qrcode)
         setStatus("awaiting_scan")
       }
     } catch (error: any) {

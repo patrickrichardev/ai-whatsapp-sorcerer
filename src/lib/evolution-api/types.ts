@@ -2,6 +2,7 @@
 export interface EvolutionAPIResponse {
   success: boolean;
   message?: string;
+  qr?: string;
   qrcode?: string;
   status?: string;
   error?: string;

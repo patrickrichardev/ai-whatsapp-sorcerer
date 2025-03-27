@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -95,7 +94,7 @@ const Devices = () => {
       fetchConnectedDevices()
       
       // Redirecionar para página de QR code se necessário
-      if (response.status === 'awaiting_scan' && response.qr) {
+      if (response.status === 'awaiting_scan' && (response.qr || response.qrcode)) {
         window.location.href = `/connect-whatsapp/qr?agent=${agentId}`
       }
       
