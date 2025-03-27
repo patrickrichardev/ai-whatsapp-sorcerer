@@ -6,31 +6,114 @@ import {
   Smartphone, 
   Plus, 
   MessageSquare, 
-  AlertTriangle 
+  AlertTriangle,
+  Loader2
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { useAgents } from "@/hooks/useAgents"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+import { initializeWhatsAppInstance, checkWhatsAppStatus } from "@/lib/evolution-api/instance"
+import { supabase } from "@/lib/supabase"
 
 const Devices = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isCreatingInstance, setIsCreatingInstance] = useState(false)
+  const [instanceName, setInstanceName] = useState("")
+  const [connectedDevices, setConnectedDevices] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
   const { agents } = useAgents(user?.id)
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchConnectedDevices()
+    }
+  }, [user?.id])
+
+  const fetchConnectedDevices = async () => {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('agent_connections')
+        .select('*')
+        .eq('platform', 'whatsapp')
+      
+      if (error) throw error
+      setConnectedDevices(data || [])
+    } catch (error) {
+      console.error("Erro ao buscar dispositivos:", error)
+      toast.error("Não foi possível carregar os dispositivos conectados")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCreateInstance = async () => {
+    if (!instanceName) {
+      toast.error("Por favor, forneça um nome para a instância")
+      return
+    }
+    
+    setIsCreatingInstance(true)
+    try {
+      // Criar um "agente temporário" com ID único para associar a instância
+      const { data: agent, error: agentError } = await supabase
+        .from('agents')
+        .insert({
+          user_id: user?.id,
+          name: instanceName,
+          prompt: `Instância ${instanceName}`,
+          temperature: 0.7
+        })
+        .select()
+        .single()
+      
+      if (agentError) throw agentError
+      
+      const agentId = agent.id
+      
+      // Inicializar instância no Evolution API
+      const response = await initializeWhatsAppInstance(agentId)
+      
+      if (!response.success) {
+        throw new Error(response.error || "Falha ao criar instância")
+      }
+      
+      toast.success("Instância criada com sucesso")
+      setIsDialogOpen(false)
+      fetchConnectedDevices()
+      
+      // Redirecionar para página de QR code se necessário
+      if (response.status === 'awaiting_scan' && response.qr) {
+        window.location.href = `/connect-whatsapp/qr?agent=${agentId}`
+      }
+      
+    } catch (error: any) {
+      console.error("Erro ao criar instância:", error)
+      toast.error(`Erro ao criar instância: ${error.message}`)
+    } finally {
+      setIsCreatingInstance(false)
+    }
+  }
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4 animate-fadeIn">
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Dispositivos</h1>
+          <h1 className="text-3xl font-bold">Instâncias</h1>
           <p className="text-muted-foreground">
-            Gerencie seus dispositivos conectados e adicione novos
+            Gerencie suas instâncias do WhatsApp e adicione novas
           </p>
         </div>
 
@@ -41,106 +124,99 @@ const Devices = () => {
                 <Plus className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Conectar Dispositivo</h3>
+                <h3 className="font-semibold text-lg">Criar Nova Instância</h3>
                 <p className="text-sm text-muted-foreground">
-                  Adicione um novo dispositivo para usar com seus agentes
+                  Adicione uma nova instância do WhatsApp para seus atendimentos
                 </p>
               </div>
             </div>
             <Button onClick={() => setIsDialogOpen(true)}>
-              Conectar
+              Criar Instância
             </Button>
           </div>
         </Card>
 
         <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-semibold">Dispositivos Conectados</h2>
-          <Card className="p-6">
-            <div className="text-center py-6">
-              <Smartphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">Nenhum dispositivo conectado</h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                Você ainda não possui dispositivos conectados.
-              </p>
+          <h2 className="text-xl font-semibold">Instâncias Conectadas</h2>
+          
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          </Card>
+          ) : connectedDevices.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {connectedDevices.map((device) => (
+                <Card key={device.id} className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-full ${device.is_active ? 'bg-green-100' : 'bg-amber-100'}`}>
+                        <Smartphone className={`h-5 w-5 ${device.is_active ? 'text-green-600' : 'text-amber-600'}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">Instância {device.agent_id.substring(0, 8)}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Status: {device.is_active ? 'Conectado' : 'Desconectado'}
+                        </p>
+                      </div>
+                    </div>
+                    <Link to={`/connect-whatsapp/qr?agent=${device.agent_id}`}>
+                      <Button variant="outline" size="sm">
+                        Gerenciar
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-6">
+              <div className="text-center py-6">
+                <Smartphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium">Nenhuma instância conectada</h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Você ainda não possui instâncias do WhatsApp conectadas.
+                </p>
+              </div>
+            </Card>
+          )}
         </div>
 
-        {/* Modal/Dialog para escolher o tipo de API */}
+        {/* Modal/Dialog para criar instância */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Selecione o tipo de API</DialogTitle>
+              <DialogTitle>Criar Nova Instância</DialogTitle>
               <DialogDescription>
-                Escolha o método de conexão para seu dispositivo
+                Forneça um nome para sua nova instância do WhatsApp
               </DialogDescription>
             </DialogHeader>
             
             <div className="grid gap-4 py-4">
-              <Link 
-                to={agents.length > 0 ? `/select-agent` : "#"} 
-                className={agents.length === 0 ? "pointer-events-none opacity-50" : ""}
-                onClick={() => setIsDialogOpen(false)}
-              >
-                <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg">
-                      <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1">
-                        API não oficial
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Conecte via QR Code com o WhatsApp do seu celular
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-
-              <Card className="p-6 opacity-50 cursor-not-allowed">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg">
-                    <MessageSquare className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">API oficial</h3>
-                      <span className="text-xs bg-muted px-2 py-1 rounded">
-                        Em breve
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Conecte usando a API oficial do WhatsApp Business
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {agents.length === 0 && (
-              <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg">
-                <div className="flex space-x-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800 dark:text-amber-300">
-                    <p className="font-medium">É necessário criar um agente primeiro</p>
-                    <p className="mt-1">Você precisa criar pelo menos um agente antes de conectar um dispositivo.</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2"
-                      onClick={() => {
-                        setIsDialogOpen(false)
-                        window.location.href = "/create-assistant"
-                      }}
-                    >
-                      Criar Agente
-                    </Button>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="instance-name">Nome da Instância</Label>
+                <Input 
+                  id="instance-name" 
+                  placeholder="Ex: Suporte, Vendas, etc."
+                  value={instanceName}
+                  onChange={(e) => setInstanceName(e.target.value)}
+                />
               </div>
-            )}
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+              <Button 
+                onClick={handleCreateInstance}
+                disabled={isCreatingInstance}
+              >
+                {isCreatingInstance ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Criando...
+                  </>
+                ) : "Criar Instância"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
