@@ -47,7 +47,14 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
         .select()
         .single()
       
-      if (agentError) throw agentError
+      if (agentError) {
+        // Check for subscription error specifically
+        if (agentError.message?.includes("No active subscription found")) {
+          toast.error("Você precisa ter uma assinatura ativa para criar instâncias")
+          throw new Error("Você precisa ter uma assinatura ativa para criar instâncias")
+        }
+        throw agentError
+      }
       
       const agentId = agent.id
       

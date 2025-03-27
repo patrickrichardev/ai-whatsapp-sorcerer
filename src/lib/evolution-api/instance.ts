@@ -32,6 +32,15 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
       };
     }
     
+    // If data contains an error, pass it along
+    if (data.error) {
+      return {
+        success: false,
+        error: data.error,
+        details: data.details || "Sem detalhes adicionais"
+      };
+    }
+    
     return data;
   } catch (error: any) {
     console.error("Evolution API Error:", error);
