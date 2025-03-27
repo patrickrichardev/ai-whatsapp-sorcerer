@@ -9,7 +9,7 @@ interface CreateDeviceCardProps {
 
 export function CreateDeviceCard({ onClick }: CreateDeviceCardProps) {
   return (
-    <Card className="p-6 hover:shadow-md transition-shadow">
+    <Card className="p-6 hover:shadow-md transition-shadow bg-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="bg-primary/10 p-3 rounded-lg">
