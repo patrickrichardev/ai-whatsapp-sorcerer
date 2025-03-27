@@ -1,6 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { EvolutionAPIResponse } from "./types";
+import { EvolutionAPIResponse, EvolutionAPICredentials } from "./types";
 
 export async function testEvolutionAPIConnection(credentials?: {
   apiUrl?: string;
@@ -46,10 +46,7 @@ export async function testEvolutionAPIConnection(credentials?: {
   }
 }
 
-export async function updateAPICredentials(credentials: {
-  apiUrl: string;
-  apiKey: string;
-}): Promise<EvolutionAPIResponse> {
+export async function updateAPICredentials(credentials: EvolutionAPICredentials): Promise<EvolutionAPIResponse> {
   try {
     console.log("Updating Evolution API credentials");
     

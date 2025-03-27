@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { testEvolutionAPIConnection, updateAPICredentials } from "@/lib/evolution-api";
 import { toast } from "sonner";
+import { EvolutionAPICredentials } from "@/lib/evolution-api";
 
 interface APICredentialsFormProps {
   onSuccess: () => void;
