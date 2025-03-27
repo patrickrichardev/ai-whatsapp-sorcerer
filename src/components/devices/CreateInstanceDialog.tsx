@@ -64,7 +64,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       
       // Redirecionar para página de QR code se necessário
       if (response.status === 'awaiting_scan' && (response.qr || response.qrcode)) {
-        window.location.href = `/connect-whatsapp/qr?agent=${agentId}`
+        window.location.href = `/connect-whatsapp/qr?agent_id=${agentId}`
       }
       
     } catch (error: any) {
@@ -77,7 +77,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Criar Nova Instância</DialogTitle>
           <DialogDescription>
