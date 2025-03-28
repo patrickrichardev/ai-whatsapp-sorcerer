@@ -17,11 +17,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       className={className}
     >
       {theme === "light" ? (
-        <Moon className="h-5 w-5 mr-2" />
-      ) : (
         <Sun className="h-5 w-5 mr-2" />
+      ) : (
+        <Moon className="h-5 w-5 mr-2" />
       )}
-      Alterar Tema
+      {theme === "light" ? "Modo Escuro" : "Modo Claro"}
     </Button>
   )
 }
