@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { EvolutionAPIResponse } from "./types";
 
@@ -122,6 +121,7 @@ export async function disconnectWhatsAppInstance(agentId: string): Promise<Evolu
   }
 }
 
+// Renamed to avoid conflict but still exported for backward compatibility
 export async function testEvolutionAPIConnection(): Promise<EvolutionAPIResponse> {
   try {
     console.log("Testing Evolution API connection");
