@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Smartphone } from "lucide-react"
 
 interface CreateDeviceCardProps {
   onClick: () => void
@@ -13,7 +13,7 @@ export function CreateDeviceCard({ onClick }: CreateDeviceCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="bg-primary/10 p-3 rounded-lg">
-            <Plus className="h-6 w-6 text-primary" />
+            <Smartphone className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">Criar Nova Instância</h3>
@@ -22,8 +22,9 @@ export function CreateDeviceCard({ onClick }: CreateDeviceCardProps) {
             </p>
           </div>
         </div>
-        <Button onClick={onClick} className="shadow-sm">
-          Criar Instância
+        <Button onClick={onClick} className="shadow-sm flex items-center">
+          <Plus className="h-4 w-4 mr-2" />
+          Conectar WhatsApp
         </Button>
       </div>
     </Card>

@@ -18,9 +18,11 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
   const [filter, setFilter] = useState<'all' | 'waiting' | 'closed'>('all')
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadChats = async () => {
+      setIsLoading(true)
       try {
         let query = supabase
           .from('chat_conversations')
@@ -53,6 +55,8 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
       } catch (error) {
         console.error('Error loading chats:', error)
         toast.error('Erro ao carregar conversas')
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -77,6 +81,10 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
                 chat.id === payload.new.id ? payload.new as Chat : chat
               )
             )
+          } else if (payload.eventType === 'DELETE') {
+            setChats(current => 
+              current.filter(chat => chat.id !== payload.old.id)
+            )
           }
         }
       )
@@ -88,8 +96,10 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
   }, [filter, selectedDate])
 
   const filteredChats = chats.filter(chat => 
-    chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
+    chat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chat.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chat.last_message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chat.customer_phone?.includes(searchTerm)
   )
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -112,20 +122,40 @@ export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarP
       
       <ChatSidebarFilterTabs filter={filter} setFilter={setFilter} />
 
-      <DateFilterBanner 
-        selectedDate={selectedDate} 
-        handleClearDate={handleClearDate} 
-      />
+      {selectedDate && (
+        <DateFilterBanner 
+          selectedDate={selectedDate} 
+          handleClearDate={handleClearDate} 
+        />
+      )}
 
       <div className="flex-1 overflow-y-auto">
-        {filteredChats.map((chat) => (
-          <ChatItem 
-            key={chat.id} 
-            chat={chat} 
-            isSelected={selectedChat?.id === chat.id}
-            onClick={() => onSelectChat(chat)} 
-          />
-        ))}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-20">
+            <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        ) : filteredChats.length > 0 ? (
+          filteredChats.map((chat) => (
+            <ChatItem 
+              key={chat.id} 
+              chat={chat} 
+              isSelected={selectedChat?.id === chat.id}
+              onClick={() => onSelectChat(chat)} 
+            />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4 text-center">
+            <p>Nenhuma conversa encontrada</p>
+            {filter !== 'all' && (
+              <button 
+                onClick={() => setFilter('all')} 
+                className="text-primary text-sm mt-2 hover:underline"
+              >
+                Mostrar todas as conversas
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

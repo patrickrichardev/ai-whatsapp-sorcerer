@@ -47,7 +47,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
@@ -73,20 +73,20 @@ serve(async (req) => {
       throw new Error('Estrutura do prompt inválida')
     }
 
-    // Create OpenAI Assistant
+    // Create OpenAI Assistant with v2 API
     console.log('Criando Assistente OpenAI...')
     const assistantResponse = await fetch('https://api.openai.com/v1/assistants', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v1'
+        'OpenAI-Beta': 'assistants=v2'  // Atualização para v2
       },
       body: JSON.stringify({
         name,
         description,
         instructions: prompt,
-        model: "gpt-4-turbo-preview",
+        model: "gpt-4o-mini",
         tools: [{ type: "code_interpreter" }]
       })
     })
