@@ -5,7 +5,7 @@ export * from "./types";
 // Re-export from connection.ts - be explicit to avoid conflicts
 export { 
   updateEvolutionAPICredentials,
-  testEvolutionAPIConnection as testEvolutionAPIConnection_connection 
+  testEvolutionAPIConnection 
 } from "./connection";
 
 // Re-export instance functions - be explicit to avoid conflicts
@@ -19,8 +19,5 @@ export {
 // Re-export messaging functions
 export * from "./messaging";
 
-// Export a default function that combines both test functions
-export function testEvolutionAPIConnection(credentials?: import("./types").EvolutionAPICredentials) {
-  // By default, use the connection test implementation
-  return testEvolutionAPIConnection_connection(credentials);
-}
+// We don't need to export a default function that combines both test functions
+// since we're already correctly exporting the connection test version by default

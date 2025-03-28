@@ -1,22 +1,20 @@
 
 import { useState } from "react";
+import { updateEvolutionAPICredentials, testEvolutionAPIConnection } from "@/lib/evolution-api";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { testEvolutionAPIConnection, updateEvolutionAPICredentials } from "@/lib/evolution-api/connection";
-import { EvolutionAPICredentials } from "@/lib/evolution-api/types";
 import { toast } from "sonner";
 
 interface APICredentialsFormProps {
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
   const [apiUrl, setApiUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,81 +24,83 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
       return;
     }
     
-    setIsSubmitting(true);
+    setIsLoading(true);
     
     try {
-      // First test the connection with the new credentials
-      const testResponse = await testEvolutionAPIConnection({ 
-        apiUrl, 
-        apiKey 
-      });
+      // Atualiza as credenciais localmente primeiro
+      updateEvolutionAPICredentials({ apiUrl, apiKey });
       
-      if (!testResponse.success) {
-        toast.error("Falha ao conectar com as credenciais fornecidas");
-        console.error("Connection test failed:", testResponse);
-        setIsSubmitting(false);
-        return;
+      // Testa a conexão
+      const response = await testEvolutionAPIConnection({ apiUrl, apiKey });
+      
+      if (!response.success) {
+        throw new Error(response.error || "Falha ao testar conexão");
       }
       
-      // If connection test is successful, update the credentials
-      const updateResponse = await updateEvolutionAPICredentials({
-        apiUrl,
-        apiKey
-      });
+      toast.success("Conexão estabelecida com sucesso!");
       
-      if (updateResponse.success) {
-        toast.success("Credenciais atualizadas com sucesso");
+      if (onSuccess) {
         onSuccess();
-      } else {
-        toast.error("Falha ao atualizar credenciais");
-        console.error("Update failed:", updateResponse);
       }
-    } catch (error) {
-      console.error("Error updating credentials:", error);
-      toast.error("Erro ao processar a solicitação");
+    } catch (error: any) {
+      console.error("Erro ao testar conexão:", error);
+      toast.error(`Erro ao testar conexão: ${error.message}`);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Atualizar Credenciais da API</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="apiUrl">URL da Evolution API</Label>
-            <Input
-              id="apiUrl"
-              placeholder="https://seu-servidor.com"
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-          <div>
-            <Label htmlFor="apiKey">Chave da API</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              placeholder="Sua chave de API"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Configuração da Evolution API</h2>
+        <p className="text-sm text-muted-foreground">
+          Configure os detalhes de conexão para o servidor da Evolution API
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="api-url">URL da API</Label>
+          <Input 
+            id="api-url" 
+            placeholder="https://sua-evolution-api.com" 
+            value={apiUrl}
+            onChange={(e) => setApiUrl(e.target.value)}
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Por exemplo: https://seu-servidor.com
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="api-key">Chave da API</Label>
+          <Input 
+            id="api-key" 
+            type="password"
+            placeholder="Sua chave de API" 
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="pt-2">
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Atualizando...
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Testando Conexão...
               </>
-            ) : (
-              "Atualizar Credenciais"
-            )}
+            ) : "Salvar Configurações"}
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }
