@@ -1,3 +1,4 @@
+
 [functions.create-checkout-session]
 verify_jwt = true
 
@@ -8,4 +9,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.whatsapp-connection]
+verify_jwt = true
+
+[functions.evolution-integration]
 verify_jwt = true

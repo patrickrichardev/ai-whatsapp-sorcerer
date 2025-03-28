@@ -4,10 +4,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 // Utility function to get credentials
 export function getCredentials(requestCredentials?: { apiUrl?: string; apiKey?: string }) {
-  return {
-    evolutionApiUrl: requestCredentials?.apiUrl || customCredentials.apiUrl || DEFAULT_EVOLUTION_API_URL,
-    evolutionApiKey: requestCredentials?.apiKey || customCredentials.apiKey || DEFAULT_EVOLUTION_API_KEY,
-  };
+  const evolutionApiUrl = requestCredentials?.apiUrl || 
+                          customCredentials.apiUrl || 
+                          Deno.env.get('EVOLUTION_API_URL') || 
+                          DEFAULT_EVOLUTION_API_URL;
+                          
+  const evolutionApiKey = requestCredentials?.apiKey || 
+                          customCredentials.apiKey || 
+                          Deno.env.get('EVOLUTION_API_KEY') || 
+                          DEFAULT_EVOLUTION_API_KEY;
+  
+  return { evolutionApiUrl, evolutionApiKey };
 }
 
 // Create Supabase client
@@ -33,5 +40,9 @@ export function createResponse(data: any, status = 200) {
 
 // Utility function to create error response
 export function createErrorResponse(error: string, status = 500, details?: any) {
-  return createResponse({ error, details }, status);
+  return createResponse({ 
+    success: false,
+    error, 
+    details 
+  }, status);
 }
