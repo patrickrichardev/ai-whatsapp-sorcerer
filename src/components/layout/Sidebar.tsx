@@ -50,7 +50,7 @@ export default function Sidebar() {
   const isCurrentPath = (path: string) => location.pathname === path
 
   return (
-    <div className="flex h-full flex-col bg-white border-r border-border">
+    <div className="flex h-full flex-col bg-card border-r border-border">
       <div className="flex h-16 items-center justify-center px-6 border-b">
         <img src="/elia.png" alt="Logo" className="h-8 w-auto" />
       </div>

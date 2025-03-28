@@ -12,7 +12,7 @@ export default function ChatSidebarFilterTabs({
   setFilter 
 }: ChatSidebarFilterTabsProps) {
   return (
-    <nav className="grid grid-cols-3 gap-1 p-2 border-b bg-background/50">
+    <nav className="grid grid-cols-3 gap-1 p-2 border-b bg-muted/30">
       <Button 
         variant={filter === 'all' ? 'default' : 'ghost'} 
         size="sm" 
