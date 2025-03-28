@@ -8,6 +8,10 @@ export interface ConnectedDevice {
   agent_id: string
   is_active: boolean
   platform: string
+  connection_data?: {
+    name?: string
+    status?: string
+  }
 }
 
 export function useConnectedDevices(userId: string | undefined) {
@@ -19,13 +23,14 @@ export function useConnectedDevices(userId: string | undefined) {
     
     setIsLoading(true)
     try {
+      // Fetch all agent connections that are for WhatsApp and active
       const { data, error } = await supabase
         .from('agent_connections')
-        .select('*')
+        .select('*, agents:agent_id(name)') // Join with agents table to get names
         .eq('platform', 'whatsapp')
-        .eq('is_active', true) // Apenas dispositivos realmente ativos
       
       if (error) throw error
+      
       setConnectedDevices(data || [])
     } catch (error) {
       console.error("Erro ao buscar dispositivos:", error)
