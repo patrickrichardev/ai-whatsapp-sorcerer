@@ -13,7 +13,7 @@ const Devices = () => {
   const [isAPISelectionOpen, setIsAPISelectionOpen] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const { user } = useAuth()
-  const { connectedDevices, isLoading, fetchConnectedDevices } = useConnectedDevices(user?.id)
+  const { connectedDevices, isLoading, fetchConnectedDevices, deleteDevice } = useConnectedDevices(user?.id)
 
   const handleCreateDeviceClick = () => {
     setIsAPISelectionOpen(true)
@@ -46,7 +46,11 @@ const Devices = () => {
           ) : connectedDevices.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {connectedDevices.map((device) => (
-                <DeviceCard key={device.id} device={device} />
+                <DeviceCard 
+                  key={device.id} 
+                  device={device} 
+                  onDelete={deleteDevice}
+                />
               ))}
             </div>
           ) : (

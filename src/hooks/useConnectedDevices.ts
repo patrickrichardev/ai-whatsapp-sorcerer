@@ -12,6 +12,9 @@ export interface ConnectedDevice {
     name?: string
     status?: string
   }
+  agents?: {
+    name: string
+  }
 }
 
 export function useConnectedDevices(userId: string | undefined) {
@@ -23,15 +26,22 @@ export function useConnectedDevices(userId: string | undefined) {
     
     setIsLoading(true)
     try {
-      // Fetch all agent connections that are for WhatsApp and active
+      // Fetch WhatsApp connections with agent details
       const { data, error } = await supabase
         .from('agent_connections')
-        .select('*, agents:agent_id(name)') // Join with agents table to get names
+        .select('*, agents:agent_id(name)')
         .eq('platform', 'whatsapp')
       
       if (error) throw error
       
-      setConnectedDevices(data || [])
+      // Filtrar para mostrar apenas instâncias válidas
+      // Consideramos válidas aquelas que têm um agent_id associado e que têm dados de conexão
+      const validDevices = data?.filter(device => 
+        device.agent_id && 
+        device.agents // Verifica se o agente existe
+      ) || [];
+      
+      setConnectedDevices(validDevices)
     } catch (error) {
       console.error("Erro ao buscar dispositivos:", error)
       toast.error("Não foi possível carregar os dispositivos conectados")
@@ -46,9 +56,28 @@ export function useConnectedDevices(userId: string | undefined) {
     }
   }, [userId])
 
+  // Método para excluir uma instância
+  const deleteDevice = async (deviceId: string) => {
+    try {
+      const { error } = await supabase
+        .from('agent_connections')
+        .delete()
+        .eq('id', deviceId)
+        
+      if (error) throw error
+      
+      toast.success("Instância removida com sucesso")
+      fetchConnectedDevices() // Atualizar a lista após excluir
+    } catch (error) {
+      console.error("Erro ao excluir instância:", error)
+      toast.error("Não foi possível remover a instância")
+    }
+  }
+
   return {
     connectedDevices,
     isLoading,
-    fetchConnectedDevices
+    fetchConnectedDevices,
+    deleteDevice
   }
 }
