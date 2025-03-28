@@ -1,8 +1,7 @@
 
 import { 
   Dialog, 
-  DialogContent,
-  DialogClose
+  DialogContent
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
@@ -33,9 +32,14 @@ export function APISelectionDialog({
       <DialogContent className="max-w-md bg-background border border-border text-foreground p-0 gap-0 shadow-xl rounded-xl overflow-hidden">
         <div className="p-4 pb-2 flex items-center justify-between border-b">
           <h2 className="text-xl font-medium">Novo dispositivo</h2>
-          <DialogClose className="rounded-full p-1 hover:bg-muted">
-            <X className="h-5 w-5" />
-          </DialogClose>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-full p-0 hover:bg-muted"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
         
         <div className="flex flex-col gap-3 px-4 py-3">
