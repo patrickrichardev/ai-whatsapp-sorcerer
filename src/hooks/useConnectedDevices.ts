@@ -5,15 +5,11 @@ import { toast } from "sonner"
 
 export interface ConnectedDevice {
   id: string
-  agent_id: string
   is_active: boolean
   platform: string
   connection_data?: {
     name?: string
     status?: string
-  }
-  agents?: {
-    name: string
   }
 }
 
@@ -26,19 +22,18 @@ export function useConnectedDevices(userId: string | undefined) {
     
     setIsLoading(true)
     try {
-      // Fetch WhatsApp connections with agent details
+      // Fetch WhatsApp connections
       const { data, error } = await supabase
         .from('agent_connections')
-        .select('*, agents:agent_id(name)')
+        .select('*')
         .eq('platform', 'whatsapp')
       
       if (error) throw error
       
       // Filtrar para mostrar apenas instâncias válidas
-      // Consideramos válidas aquelas que têm um agent_id associado e que têm dados de conexão
       const validDevices = data?.filter(device => 
-        device.agent_id && 
-        device.agents // Verifica se o agente existe
+        device.connection_data && 
+        device.connection_data.name
       ) || [];
       
       setConnectedDevices(validDevices)

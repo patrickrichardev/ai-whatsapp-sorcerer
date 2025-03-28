@@ -69,15 +69,15 @@ export async function handleTestConnection(credentials?: { apiUrl?: string; apiK
 
 // Handler for connecting a WhatsApp instance
 export async function handleConnect(
-  agent_id: string, 
+  connection_id: string, 
   supabaseClient: any,
   credentials?: { apiUrl?: string; apiKey?: string }
 ) {
-  if (!agent_id) {
-    return createErrorResponse('ID do agente não fornecido', 400);
+  if (!connection_id) {
+    return createErrorResponse('ID da conexão não fornecido', 400);
   }
   
-  const instanceName = `agent_${agent_id}`;
+  const instanceName = `conn_${connection_id}`;
   
   try {
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
@@ -95,7 +95,7 @@ export async function handleConnect(
       },
       body: JSON.stringify({
         instanceName,
-        token: agent_id,
+        token: connection_id,
         qrcode: true
       })
     });
@@ -134,12 +134,11 @@ export async function handleConnect(
 
       await supabaseClient
         .from('agent_connections')
-        .upsert({
-          agent_id,
-          platform: 'whatsapp',
+        .update({
           is_active: false,
-          connection_data: { status: 'awaiting_scan', qr }
-        });
+          connection_data: { status: 'awaiting_scan', qr, name: connectionData.instance?.instanceName || 'WhatsApp Instance' }
+        })
+        .eq('id', connection_id);
 
       return createResponse({ 
         success: true,
@@ -164,12 +163,12 @@ export async function handleConnect(
 
 // Handler for checking status
 export async function handleStatus(
-  agent_id: string,
+  connection_id: string,
   supabaseClient: any,
   credentials?: { apiUrl?: string; apiKey?: string }
 ) {
   try {
-    const instanceName = `agent_${agent_id}`;
+    const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     console.log(`Checking status for instance: ${instanceName}`);
@@ -192,12 +191,11 @@ export async function handleStatus(
     if (statusData.state === 'open') {
       await supabaseClient
         .from('agent_connections')
-        .upsert({
-          agent_id,
-          platform: 'whatsapp',
+        .update({
           is_active: true,
           connection_data: { status: 'connected' }
-        });
+        })
+        .eq('id', connection_id);
 
       return createResponse({ 
         success: true,
@@ -253,7 +251,7 @@ export async function handleStatus(
 
 // Handler for sending messages
 export async function handleSend(
-  agent_id: string,
+  connection_id: string,
   phone: string,
   message: string,
   credentials?: { apiUrl?: string; apiKey?: string }
@@ -263,7 +261,7 @@ export async function handleSend(
   }
 
   try {
-    const instanceName = `agent_${agent_id}`;
+    const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     const sendResponse = await fetch(`${evolutionApiUrl}/message/text/${instanceName}`, {
@@ -299,12 +297,12 @@ export async function handleSend(
 
 // Handler for disconnecting
 export async function handleDisconnect(
-  agent_id: string,
+  connection_id: string,
   supabaseClient: any,
   credentials?: { apiUrl?: string; apiKey?: string }
 ) {
   try {
-    const instanceName = `agent_${agent_id}`;
+    const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     const logoutResponse = await fetch(`${evolutionApiUrl}/instance/logout/${instanceName}`, {
@@ -336,12 +334,11 @@ export async function handleDisconnect(
 
     await supabaseClient
       .from('agent_connections')
-      .upsert({
-        agent_id,
-        platform: 'whatsapp',
+      .update({
         is_active: false,
         connection_data: { status: 'disconnected' }
-      });
+      })
+      .eq('id', connection_id);
 
     return createResponse({ 
       success: true,

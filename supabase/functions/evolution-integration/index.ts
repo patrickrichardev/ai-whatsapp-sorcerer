@@ -28,9 +28,9 @@ serve(async (req) => {
       return createErrorResponse("Invalid JSON in request body", 400);
     }
     
-    const { action, agent_id, phone, message, credentials } = requestData
+    const { action, connection_id, phone, message, credentials } = requestData
     
-    console.log(`Processing action: ${action}, agent_id: ${agent_id || 'none'}`);
+    console.log(`Processing action: ${action}, connection_id: ${connection_id || 'none'}`);
     
     switch (action) {
       case "update_credentials":
@@ -40,16 +40,16 @@ serve(async (req) => {
         return await handleTestConnection(credentials)
 
       case 'connect':
-        return await handleConnect(agent_id, supabaseClient, credentials)
+        return await handleConnect(connection_id, supabaseClient, credentials)
 
       case 'status':
-        return await handleStatus(agent_id, supabaseClient, credentials)
+        return await handleStatus(connection_id, supabaseClient, credentials)
 
       case 'send':
-        return await handleSend(agent_id, phone, message, credentials)
+        return await handleSend(connection_id, phone, message, credentials)
 
       case 'disconnect':
-        return await handleDisconnect(agent_id, supabaseClient, credentials)
+        return await handleDisconnect(connection_id, supabaseClient, credentials)
 
       default:
         console.error(`Invalid action requested: ${action}`);

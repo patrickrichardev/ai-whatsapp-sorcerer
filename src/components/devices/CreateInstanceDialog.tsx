@@ -40,27 +40,14 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
     
     setIsCreatingInstance(true)
     try {
-      // Primeiro criar um agente no banco de dados, que servirá como base para a instância WhatsApp
-      const { data: agent, error: agentError } = await supabase
-        .from('agents')
-        .insert({
-          user_id: userId,
-          name: instanceName,
-          prompt: `Instância WhatsApp: ${instanceName}`,
-          temperature: 0.7
-        })
-        .select()
-        .single()
+      // Create a WhatsApp connection record directly with a unique ID
+      const connectionId = crypto.randomUUID()
       
-      if (agentError) throw agentError
-      
-      const agentId = agent.id
-      
-      // Agora criar o registro de conexão associado ao agente
+      // Create the connection record
       const { error: connectionError } = await supabase
         .from('agent_connections')
         .insert({
-          agent_id: agentId, // Usando o ID do agente que acabamos de criar
+          id: connectionId,
           platform: 'whatsapp',
           is_active: false,
           connection_data: { 
@@ -71,10 +58,16 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       
       if (connectionError) throw connectionError
       
-      // Inicializar instância no Evolution API
-      const response = await initializeWhatsAppInstance(agentId)
+      // Initialize the WhatsApp instance in Evolution API
+      const response = await initializeWhatsAppInstance(connectionId)
       
       if (!response.success) {
+        // Clean up the record if the API call fails
+        await supabase
+          .from('agent_connections')
+          .delete()
+          .eq('id', connectionId)
+          
         throw new Error(response.error || "Falha ao criar instância")
       }
       
@@ -82,9 +75,9 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       onOpenChange(false)
       onSuccess()
       
-      // Redirecionar para página de QR code se necessário
+      // Redirect to QR code page if necessary
       if (response.status === 'awaiting_scan' && (response.qr || response.qrcode)) {
-        window.location.href = `/connect-whatsapp/qr?agent_id=${agentId}`
+        window.location.href = `/connect-whatsapp/qr?connection_id=${connectionId}`
       }
       
     } catch (error: any) {

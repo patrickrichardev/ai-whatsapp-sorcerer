@@ -18,14 +18,10 @@ import {
 interface DeviceCardProps {
   device: {
     id: string
-    agent_id: string
     is_active: boolean
     connection_data?: {
       name?: string
       status?: string
-    }
-    agents?: {
-      name: string
     }
   }
   onDelete: (deviceId: string) => Promise<void>
@@ -35,10 +31,8 @@ export function DeviceCard({ device, onDelete }: DeviceCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   
-  // Get instance name from agent or connection_data
-  const instanceName = device.agents?.name || 
-                       device.connection_data?.name || 
-                       `Instância ${device.agent_id.substring(0, 8)}`
+  // Get instance name from connection_data
+  const instanceName = device.connection_data?.name || `Instância ${device.id.substring(0, 8)}`
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -65,7 +59,7 @@ export function DeviceCard({ device, onDelete }: DeviceCardProps) {
           </div>
         </div>
         <div className="flex space-x-2">
-          <Link to={`/connect-whatsapp/qr?agent_id=${device.agent_id}`}>
+          <Link to={`/connect-whatsapp/qr?connection_id=${device.id}`}>
             <Button variant="outline" size="sm">
               Gerenciar
             </Button>

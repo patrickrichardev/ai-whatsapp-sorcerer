@@ -1,14 +1,15 @@
+
 import { supabase } from "@/lib/supabase";
 import { EvolutionAPIResponse } from "./types";
 
-export async function initializeWhatsAppInstance(agentId: string): Promise<EvolutionAPIResponse> {
+export async function initializeWhatsAppInstance(connectionId: string): Promise<EvolutionAPIResponse> {
   try {
-    console.log("Initializing WhatsApp instance for agent:", agentId);
+    console.log("Initializing WhatsApp instance for connection:", connectionId);
     
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "connect", 
-        agent_id: agentId 
+        connection_id: connectionId 
       }
     });
     
@@ -51,14 +52,14 @@ export async function initializeWhatsAppInstance(agentId: string): Promise<Evolu
   }
 }
 
-export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPIResponse> {
+export async function checkWhatsAppStatus(connectionId: string): Promise<EvolutionAPIResponse> {
   try {
-    console.log("Checking WhatsApp status for agent:", agentId);
+    console.log("Checking WhatsApp status for connection:", connectionId);
     
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "status", 
-        agent_id: agentId 
+        connection_id: connectionId 
       }
     });
     
@@ -92,12 +93,12 @@ export async function checkWhatsAppStatus(agentId: string): Promise<EvolutionAPI
   }
 }
 
-export async function disconnectWhatsAppInstance(agentId: string): Promise<EvolutionAPIResponse> {
+export async function disconnectWhatsAppInstance(connectionId: string): Promise<EvolutionAPIResponse> {
   try {
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "disconnect", 
-        agent_id: agentId 
+        connection_id: connectionId 
       }
     });
     
