@@ -14,6 +14,7 @@ export interface Chat {
   department?: string
   unread_count?: number
   customer_phone: string
+  customer_name?: string // Adding this property to match the database schema
 }
 
 export default function ChatLayout() {
