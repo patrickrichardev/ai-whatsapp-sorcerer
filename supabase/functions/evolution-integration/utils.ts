@@ -14,7 +14,7 @@ export function createSupabaseClient(req: Request) {
 }
 
 // Gets the Evolution API credentials from environment or request
-export function getCredentials(credentials?: { apiUrl?: string; apiKey?: string }) {
+export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: string }) {
   // Use the credentials from the request first, if provided
   if (credentials?.apiUrl && credentials?.apiKey) {
     return {

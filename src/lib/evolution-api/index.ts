@@ -12,12 +12,11 @@ export {
 export {
   initializeWhatsAppInstance,
   checkWhatsAppStatus,
-  disconnectWhatsAppInstance,
-  testEvolutionAPIConnection as testEvolutionAPIConnection_instance
+  disconnectWhatsAppInstance
 } from "./instance";
 
 // Re-export messaging functions
 export * from "./messaging";
 
-// We don't need to export a default function that combines both test functions
-// since we're already correctly exporting the connection test version by default
+// Export a default test function that combines both connection test functions
+export { testEvolutionAPIConnection as default } from "./connection";
