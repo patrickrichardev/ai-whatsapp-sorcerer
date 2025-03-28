@@ -68,7 +68,7 @@ const WhatsAppQR = () => {
   }, [qrCode]);
 
   if (!agentId) {
-    toast.error("ID do agente não fornecido");
+    toast.error("ID do dispositivo não fornecido");
     navigate("/connect-whatsapp");
     return null;
   }
