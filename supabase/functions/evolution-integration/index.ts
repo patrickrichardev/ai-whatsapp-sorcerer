@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "./config.ts"
-import { createSupabaseClient, createResponse, createErrorResponse } from "./utils.ts"
+import { createSupabaseClient, createErrorResponse } from "./utils.ts"
 import { 
   handleUpdateCredentials,
   handleTestConnection,
@@ -18,8 +18,19 @@ serve(async (req) => {
 
   try {
     const supabaseClient = createSupabaseClient(req)
-    const requestData = await req.json()
+    
+    // Parse request data
+    let requestData;
+    try {
+      requestData = await req.json()
+    } catch (error) {
+      console.error("Failed to parse request JSON:", error);
+      return createErrorResponse("Invalid JSON in request body", 400);
+    }
+    
     const { action, agent_id, phone, message, credentials } = requestData
+    
+    console.log(`Processing action: ${action}, agent_id: ${agent_id || 'none'}`);
     
     switch (action) {
       case "update_credentials":
@@ -41,10 +52,11 @@ serve(async (req) => {
         return await handleDisconnect(agent_id, supabaseClient, credentials)
 
       default:
-        return createResponse({ error: 'Invalid action' }, 400)
+        console.error(`Invalid action requested: ${action}`);
+        return createErrorResponse('Invalid action', 400)
     }
   } catch (error) {
-    console.error('Error:', error)
-    return createErrorResponse(error.message)
+    console.error('Error in edge function:', error)
+    return createErrorResponse(error.message || "Unknown error occurred")
   }
 })

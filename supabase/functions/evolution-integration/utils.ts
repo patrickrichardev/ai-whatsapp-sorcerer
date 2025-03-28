@@ -34,7 +34,7 @@ export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: s
   
   // Fall back to environment variables
   return {
-    evolutionApiUrl: Deno.env.get('EVOLUTION_API_URL') || 'http://localhost:8080',
+    evolutionApiUrl: Deno.env.get('EVOLUTION_API_URL') || '',
     evolutionApiKey: Deno.env.get('EVOLUTION_API_KEY') || ''
   };
 }
