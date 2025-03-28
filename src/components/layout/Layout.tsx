@@ -14,7 +14,7 @@ const Layout = () => {
     <div className="min-h-screen bg-background">
       {isMobile ? (
         <>
-          <div className="fixed top-0 left-0 right-0 h-16 border-b bg-background z-40 px-4 flex items-center">
+          <div className="fixed top-0 left-0 right-0 h-16 border-b bg-white z-40 px-4 flex items-center shadow-sm">
             <Sheet>
               <SheetTrigger asChild>
                 <Button 
@@ -30,13 +30,13 @@ const Layout = () => {
               </SheetContent>
             </Sheet>
           </div>
-          <main className="pt-16 px-4">
+          <main className="pt-20 px-4">
             <Outlet />
           </main>
         </>
       ) : (
         <>
-          <div className="fixed inset-y-0 left-0 w-72 border-r bg-background">
+          <div className="fixed inset-y-0 left-0 w-72 border-r bg-white shadow-sm">
             <Sidebar />
           </div>
           <div className="pl-72">
