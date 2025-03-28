@@ -23,6 +23,7 @@ export function useConnectedDevices(userId: string | undefined) {
         .from('agent_connections')
         .select('*')
         .eq('platform', 'whatsapp')
+        .eq('is_active', true) // Apenas dispositivos realmente ativos
       
       if (error) throw error
       setConnectedDevices(data || [])
