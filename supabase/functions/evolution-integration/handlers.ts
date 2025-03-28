@@ -24,7 +24,7 @@ export async function handleUpdateCredentials(credentials?: { apiUrl?: string; a
 // Handler for testing connection
 export async function handleTestConnection(credentials?: { apiUrl?: string; apiKey?: string }) {
   try {
-    const { evolutionApiUrl, evolutionApiKey } = getCredentials(credentials);
+    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     console.log(`Using Evolution API URL: ${evolutionApiUrl}`);
     console.log(`Using Evolution API Key: ${evolutionApiKey ? '***' + evolutionApiKey.slice(-4) : 'none'}`);
     
@@ -54,7 +54,7 @@ export async function handleTestConnection(credentials?: { apiUrl?: string; apiK
   } catch (error) {
     console.error("Erro ao testar conexão:", error);
     
-    const { evolutionApiUrl } = getCredentials(credentials);
+    const { evolutionApiUrl } = await getCredentials(credentials);
     
     return createResponse({ 
       success: false, 
@@ -78,12 +78,13 @@ export async function handleConnect(
   }
   
   const instanceName = `agent_${agent_id}`;
-  const { evolutionApiUrl, evolutionApiKey } = getCredentials(credentials);
   
   try {
+    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
+    
     console.log(`Creating instance with name: ${instanceName}`);
     console.log(`Evolution API URL: ${evolutionApiUrl}`);
-    console.log(`Using API Key: ***${evolutionApiKey.slice(-4)}`);
+    console.log(`Using API Key: ***${evolutionApiKey ? evolutionApiKey.slice(-4) : ''}`);
     
     // Criar instância se não existir
     const createInstanceResponse = await fetch(`${evolutionApiUrl}/instance/create`, {
@@ -169,7 +170,7 @@ export async function handleStatus(
 ) {
   try {
     const instanceName = `agent_${agent_id}`;
-    const { evolutionApiUrl, evolutionApiKey } = getCredentials(credentials);
+    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     console.log(`Checking status for instance: ${instanceName}`);
     const statusResponse = await fetch(`${evolutionApiUrl}/instance/connectionState/${instanceName}`, {
@@ -263,7 +264,7 @@ export async function handleSend(
 
   try {
     const instanceName = `agent_${agent_id}`;
-    const { evolutionApiUrl, evolutionApiKey } = getCredentials(credentials);
+    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     const sendResponse = await fetch(`${evolutionApiUrl}/message/text/${instanceName}`, {
       method: 'POST',
@@ -304,7 +305,7 @@ export async function handleDisconnect(
 ) {
   try {
     const instanceName = `agent_${agent_id}`;
-    const { evolutionApiUrl, evolutionApiKey } = getCredentials(credentials);
+    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     const logoutResponse = await fetch(`${evolutionApiUrl}/instance/logout/${instanceName}`, {
       method: 'POST',
