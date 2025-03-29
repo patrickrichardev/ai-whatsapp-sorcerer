@@ -1,6 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { corsHeaders, joinUrl } from "./config.ts";
+import { corsHeaders, joinUrl, DEFAULT_EVOLUTION_API_URL } from "./config.ts";
 
 // Create Supabase client
 export function createSupabaseClient(req: Request) {
@@ -38,8 +38,8 @@ export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: s
     };
   }
   
-  // Fall back to environment variables
-  let envApiUrl = Deno.env.get('EVOLUTION_API_URL') || '';
+  // Fall back to environment variables or default URL if not set
+  let envApiUrl = Deno.env.get('EVOLUTION_API_URL') || DEFAULT_EVOLUTION_API_URL;
   // Clean up the URL from environment variables
   envApiUrl = envApiUrl.replace(/\/+$/, '');
   
