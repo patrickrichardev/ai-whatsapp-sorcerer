@@ -66,6 +66,7 @@ export async function handleConnect(
           instanceName,
           token: connection_id,
           qrcode: true
+          type: 'whatsapp'
         }
       );
 
