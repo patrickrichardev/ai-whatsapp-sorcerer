@@ -5,7 +5,7 @@ export const corsHeaders = {
 };
 
 // Default API configuration 
-// Ajustado para não conter o `/manager` no final, pois isso já vem nos endpoints
+// Não inclui o /manager no final da URL base
 export const DEFAULT_EVOLUTION_API_URL = 'https://evolutionapi-evolution-api.nqfltx.easypanel.host';
 export const DEFAULT_EVOLUTION_API_KEY = '';
 

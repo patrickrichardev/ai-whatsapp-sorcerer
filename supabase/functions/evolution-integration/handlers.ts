@@ -31,7 +31,7 @@ export async function handleTestConnection(credentials?: { apiUrl?: string; apiK
     console.log(`Using Evolution API URL: ${evolutionApiUrl}`);
     console.log(`Using Evolution API Key: ${evolutionApiKey ? '***' + evolutionApiKey.slice(-4) : 'none'}`);
     
-    // Test connection to Evolution API
+    // Test connection to Evolution API - Importante: sem "manager/" no início
     const data = await callEvolutionAPI(
       evolutionApiUrl,
       'instance/info',
@@ -109,7 +109,7 @@ export async function handleConnect(
       console.log(`Evolution API URL: ${evolutionApiUrl}`);
       console.log(`Using API Key: ***${evolutionApiKey ? evolutionApiKey.slice(-4) : ''}`);
       
-      // Criar instância se não existir
+      // Criar instância se não existir - Endpoint correto sem "manager/"
       const createInstanceData = await callEvolutionAPI(
         evolutionApiUrl,
         'instance/create',
@@ -124,7 +124,7 @@ export async function handleConnect(
 
       console.log("Instance creation response:", createInstanceData);
 
-      // Conectar instância
+      // Conectar instância - Endpoint correto sem "manager/"
       console.log(`Connecting to instance: ${instanceName}`);
       const connectionData = await callEvolutionAPI(
         evolutionApiUrl,
@@ -188,6 +188,7 @@ export async function handleStatus(
     
     console.log(`Checking status for instance: ${instanceName}`);
     
+    // Endpoint correto sem "manager/"
     const statusData = await callEvolutionAPI(
       evolutionApiUrl,
       `instance/connectionState/${instanceName}`,
@@ -215,6 +216,7 @@ export async function handleStatus(
     console.log(`Getting QR code for instance: ${instanceName}`);
     
     try {
+      // Endpoint correto sem "manager/"
       const qrData = await callEvolutionAPI(
         evolutionApiUrl,
         `instance/qrcode/${instanceName}`,
@@ -265,6 +267,7 @@ export async function handleSend(
     const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
+    // Endpoint correto sem "manager/"
     const responseData = await callEvolutionAPI(
       evolutionApiUrl,
       `message/text/${instanceName}`,
@@ -300,6 +303,7 @@ export async function handleDisconnect(
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     try {
+      // Endpoint correto sem "manager/"
       await callEvolutionAPI(
         evolutionApiUrl,
         `instance/logout/${instanceName}`,
@@ -312,6 +316,7 @@ export async function handleDisconnect(
     }
 
     try {
+      // Endpoint correto sem "manager/"
       await callEvolutionAPI(
         evolutionApiUrl,
         `instance/delete/${instanceName}`,
