@@ -4,22 +4,21 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Default API configuration 
-// Use base URL without /api
+// URL base da API sem "/api" ou "/manager" no final
 export const DEFAULT_EVOLUTION_API_URL = 'https://evolutionapi-evolution-api.nqfltx.easypanel.host';
 export const DEFAULT_EVOLUTION_API_KEY = '';
 
-// Store custom credentials (temporary, for current session)
+// Credenciais customizadas (temporárias, para a sessão atual)
 export let customCredentials: { apiUrl: string; apiKey: string } = {
   apiUrl: '',
   apiKey: ''
 };
 
-// Helper function to safely join URL parts without double slashes
+// Função auxiliar para juntar partes de URL sem barras duplas
 export function joinUrl(base: string, path: string): string {
-  // Remove trailing slashes from base URL
+  // Remove barras no final da URL base
   const cleanBase = base.replace(/\/+$/, '');
   
-  // Join with the endpoint path, ensuring no double slashes
+  // Une com o caminho do endpoint, garantindo que não haja barras duplas
   return `${cleanBase}/${path.replace(/^\/+/, '')}`;
 }

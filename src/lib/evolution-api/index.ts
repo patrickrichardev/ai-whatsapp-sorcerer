@@ -2,13 +2,13 @@
 // Re-export types
 export * from "./types";
 
-// Re-export from connection.ts - be explicit to avoid conflicts
+// Re-export from connection.ts
 export { 
   updateEvolutionAPICredentials,
   testEvolutionAPIConnection 
 } from "./connection";
 
-// Re-export instance functions - be explicit to avoid conflicts
+// Re-export instance functions
 export {
   initializeWhatsAppInstance,
   checkWhatsAppStatus,
@@ -18,5 +18,5 @@ export {
 // Re-export messaging functions
 export * from "./messaging";
 
-// Export a default test function that combines both connection test functions
+// Export a default test function
 export { testEvolutionAPIConnection as default } from "./connection";

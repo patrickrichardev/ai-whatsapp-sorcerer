@@ -16,12 +16,9 @@ export async function handleSend(
     const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
-    // Add debug logs for send message URL
-    console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-    console.log('[DEBUG] endpoint:', `message/text/${instanceName}`);
-    console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/message/text/${instanceName}`);
+    console.log(`Enviando mensagem para ${phone} via instância ${instanceName}`);
     
-    // Endpoint correto sem "manager/"
+    // Endpoint sem "manager/"
     const responseData = await callEvolutionAPI(
       evolutionApiUrl,
       `message/text/${instanceName}`,
@@ -38,6 +35,7 @@ export async function handleSend(
       data: responseData
     });
   } catch (error) {
+    console.error("Erro ao enviar mensagem:", error);
     return createResponse({
       success: false,
       error: error.message || "Erro desconhecido",

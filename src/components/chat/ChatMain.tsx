@@ -72,8 +72,22 @@ export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
   const handleSendMessage = async (message: string) => {
     setIsLoading(true)
     try {
+      // Verificamos se temos uma conexão associada ao chat
+      const { data: connections, error: connectionsError } = await supabase
+        .from('agent_connections')
+        .select('*')
+        .eq('agent_id', chat.agent)
+        .eq('is_active', true)
+        .limit(1)
+        .single()
+
+      if (connectionsError || !connections) {
+        throw new Error('Nenhuma conexão WhatsApp ativa encontrada')
+      }
+
       // Send message via WhatsApp using the Evolution API
       const response = await sendWhatsAppMessage(
+        connections.id,
         chat.customer_phone,
         message.trim()
       )
