@@ -65,8 +65,13 @@ export async function handleConnect(
         {
           instanceName,
           token: connection_id,
-          qrcode: true
-          type: 'whatsapp'
+          type: 'whatsapp',
+          qrcode: true,
+          integration: {
+            integration_type: 'whatsapp',
+            use_qrcode: true,
+            name: instanceName
+          }
         }
       );
 
