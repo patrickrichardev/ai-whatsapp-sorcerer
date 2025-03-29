@@ -64,7 +64,7 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
             onChange={(e) => setApiUrl(e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
-            URL base da sua instância da Evolution API (sem /api no final)
+            URL base da sua instância da Evolution API (sem /api ou /manager no final)
           </p>
         </div>
         

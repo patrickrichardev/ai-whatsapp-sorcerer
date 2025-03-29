@@ -5,7 +5,7 @@ export const corsHeaders = {
 };
 
 // URL base da API sem "/api" ou "/manager" no final
-export const DEFAULT_EVOLUTION_API_URL = 'https://evolutionapi-evolution-api.nqfltx.easypanel.host';
+export const DEFAULT_EVOLUTION_API_URL = 'https://evolutionapi.dev';
 export const DEFAULT_EVOLUTION_API_KEY = '';
 
 // Credenciais customizadas (temporárias, para a sessão atual)
