@@ -12,7 +12,7 @@ export async function handleUpdateCredentials(credentials?: { apiUrl?: string; a
   }
   
   // Remove /manager if present at the end of the URL
-  const cleanApiUrl = credentials.apiUrl.replace(/\/manager$/, '');
+  const cleanApiUrl = credentials.apiUrl.replace(/\/manager\/?$/, '');
   
   // Store the custom credentials
   customCredentials.apiUrl = cleanApiUrl;

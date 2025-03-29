@@ -27,7 +27,7 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
     setIsLoading(true);
     try {
       // Remover /manager se tiver no final da URL
-      const cleanUrl = apiUrl.replace(/\/manager$/, '');
+      const cleanUrl = apiUrl.replace(/\/manager\/?$/, '');
       
       const updateResult = await updateEvolutionAPICredentials(cleanUrl, apiKey);
       

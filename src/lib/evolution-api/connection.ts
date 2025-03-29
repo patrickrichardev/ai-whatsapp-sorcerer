@@ -8,7 +8,7 @@ export async function updateEvolutionAPICredentials(apiUrl: string, apiKey: stri
     
     // Remove trailing slashes from API URL to prevent double-slash issues
     // Remove /manager se estiver presente no final da URL
-    const formattedApiUrl = apiUrl.replace(/\/+$/, '').replace(/\/manager$/, '');
+    const formattedApiUrl = apiUrl.replace(/\/+$/, '').replace(/\/manager\/?$/, '');
     
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
@@ -48,8 +48,8 @@ export async function testEvolutionAPIConnection(credentials?: { apiUrl?: string
     
     // Add credentials to request if provided
     if (credentials?.apiUrl && credentials?.apiKey) {
-      // Remove trailing slashes from API URL to prevent double-slash issues
-      const formattedApiUrl = credentials.apiUrl.replace(/\/+$/, '');
+      // Remover /manager do final da URL se presente
+      const formattedApiUrl = credentials.apiUrl.replace(/\/+$/, '').replace(/\/manager\/?$/, '');
       
       requestBody.credentials = {
         apiUrl: formattedApiUrl,

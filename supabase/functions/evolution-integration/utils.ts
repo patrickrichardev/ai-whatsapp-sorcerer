@@ -17,8 +17,11 @@ export function createSupabaseClient(req: Request) {
 export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: string }) {
   // Use the credentials from the request first, if provided
   if (credentials?.apiUrl && credentials?.apiKey) {
+    // Remover /manager se estiver presente
+    const cleanApiUrl = credentials.apiUrl.replace(/\/manager\/?$/, '');
+    
     return {
-      evolutionApiUrl: credentials.apiUrl,
+      evolutionApiUrl: cleanApiUrl,
       evolutionApiKey: credentials.apiKey
     };
   }
@@ -26,15 +29,22 @@ export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: s
   // Custom credentials object from config (used for runtime updates)
   const { customCredentials } = await import("./config.ts");
   if (customCredentials.apiUrl && customCredentials.apiKey) {
+    // Garantir que não tenha /manager no final
+    const cleanApiUrl = customCredentials.apiUrl.replace(/\/manager\/?$/, '');
+    
     return {
-      evolutionApiUrl: customCredentials.apiUrl,
+      evolutionApiUrl: cleanApiUrl,
       evolutionApiKey: customCredentials.apiKey
     };
   }
   
   // Fall back to environment variables
+  let envApiUrl = Deno.env.get('EVOLUTION_API_URL') || '';
+  // Remover /manager do final da URL do ambiente se existir
+  envApiUrl = envApiUrl.replace(/\/manager\/?$/, '');
+  
   return {
-    evolutionApiUrl: Deno.env.get('EVOLUTION_API_URL') || '',
+    evolutionApiUrl: envApiUrl,
     evolutionApiKey: Deno.env.get('EVOLUTION_API_KEY') || ''
   };
 }
