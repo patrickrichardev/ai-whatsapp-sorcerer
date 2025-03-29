@@ -1,63 +1,5 @@
 
-import { corsHeaders, customCredentials } from "./config.ts";
-import { getCredentials, createSupabaseClient, createResponse, createErrorResponse, callEvolutionAPI } from "./utils.ts";
-
-// Handler for updating credentials
-export async function handleUpdateCredentials(credentials?: { apiUrl?: string; apiKey?: string }) {
-  if (!credentials || !credentials.apiUrl || !credentials.apiKey) {
-    return createResponse({ 
-      success: false, 
-      error: "Credenciais inválidas" 
-    }, 400);
-  }
-  
-  // Remove trailing slashes if present
-  const cleanApiUrl = credentials.apiUrl.replace(/\/+$/, '');
-  
-  // Store the custom credentials
-  customCredentials.apiUrl = cleanApiUrl;
-  customCredentials.apiKey = credentials.apiKey;
-  
-  return createResponse({ 
-    success: true, 
-    message: "Credenciais atualizadas com sucesso" 
-  });
-}
-
-// Handler for testing connection
-export async function handleTestConnection(credentials?: { apiUrl?: string; apiKey?: string }) {
-  try {
-    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
-    console.log(`Using Evolution API URL: ${evolutionApiUrl}`);
-    console.log(`Using Evolution API Key: ${evolutionApiKey ? '***' + evolutionApiKey.slice(-4) : 'none'}`);
-    
-    // Test connection to Evolution API
-    const data = await callEvolutionAPI(
-      evolutionApiUrl,
-      'instance/info',
-      evolutionApiKey
-    );
-    
-    return createResponse({ 
-      success: true, 
-      message: "Conexão com a Evolution API estabelecida com sucesso",
-      data
-    });
-  } catch (error) {
-    console.error("Erro ao testar conexão:", error);
-    
-    const { evolutionApiUrl } = await getCredentials(credentials);
-    
-    return createResponse({ 
-      success: false, 
-      error: `Falha ao conectar: ${error.message}`,
-      diagnostics: {
-        apiUrl: evolutionApiUrl,
-        error: error.toString()
-      }
-    });
-  }
-}
+import { createResponse, createErrorResponse, callEvolutionAPI, getCredentials } from "../utils.ts";
 
 // Handler for connecting a WhatsApp instance
 export async function handleConnect(
@@ -264,51 +206,6 @@ export async function handleStatus(
     });
   } catch (error) {
     console.error("Error in status check:", error);
-    return createResponse({
-      success: false,
-      error: error.message || "Erro desconhecido",
-      details: error.toString()
-    }, 500);
-  }
-}
-
-// Handler for sending messages
-export async function handleSend(
-  connection_id: string,
-  phone: string,
-  message: string,
-  credentials?: { apiUrl?: string; apiKey?: string }
-) {
-  if (!phone) {
-    return createErrorResponse('Número de telefone não fornecido', 400);
-  }
-
-  try {
-    const instanceName = `conn_${connection_id}`;
-    const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
-    
-    // Add debug logs for send message URL
-    console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-    console.log('[DEBUG] endpoint:', `message/text/${instanceName}`);
-    console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/message/text/${instanceName}`);
-    
-    // Endpoint correto sem "manager/"
-    const responseData = await callEvolutionAPI(
-      evolutionApiUrl,
-      `message/text/${instanceName}`,
-      evolutionApiKey,
-      'POST',
-      {
-        number: phone,
-        text: message
-      }
-    );
-
-    return createResponse({ 
-      success: true,
-      data: responseData
-    });
-  } catch (error) {
     return createResponse({
       success: false,
       error: error.message || "Erro desconhecido",

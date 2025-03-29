@@ -9,7 +9,7 @@ import {
   handleStatus,
   handleSend,
   handleDisconnect
-} from "./handlers.ts"
+} from "./handlers/index.ts"
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
