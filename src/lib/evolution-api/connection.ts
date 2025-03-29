@@ -1,33 +1,36 @@
 
 import { supabase } from "@/lib/supabase";
-import { EvolutionAPICredentials, EvolutionAPIResponse } from "./types";
+import { EvolutionAPIResponse } from "./types";
 
-// Update API credentials both in local storage and in the edge function
-export async function updateEvolutionAPICredentials(credentials: EvolutionAPICredentials): Promise<EvolutionAPIResponse> {
+export async function updateEvolutionAPICredentials(apiUrl: string, apiKey: string): Promise<EvolutionAPIResponse> {
   try {
-    // Store credentials in localStorage for the frontend
-    localStorage.setItem('evolution_api_credentials', JSON.stringify(credentials));
+    console.log("Updating Evolution API credentials");
     
-    // Update credentials in the edge function
+    // Remove trailing slashes from API URL to prevent double-slash issues
+    const formattedApiUrl = apiUrl.replace(/\/+$/, '');
+    
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
-        action: "update_credentials", 
-        credentials
+        action: "update_credentials",
+        credentials: {
+          apiUrl: formattedApiUrl, 
+          apiKey
+        } 
       }
     });
     
     if (error) {
-      console.error("Supabase function error:", error);
+      console.error("Error updating credentials:", error);
       return {
         success: false,
-        error: `Erro na função do Supabase: ${error.message}`,
+        error: `Erro ao atualizar credenciais: ${error.message}`,
         details: JSON.stringify(error)
       };
     }
     
     return data;
   } catch (error: any) {
-    console.error("Error updating Evolution API credentials:", error);
+    console.error("Evolution API Error:", error);
     return {
       success: false,
       error: error.message || "Erro ao atualizar credenciais",
@@ -36,22 +39,25 @@ export async function updateEvolutionAPICredentials(credentials: EvolutionAPICre
   }
 }
 
-// Test connection to the Evolution API
-export async function testEvolutionAPIConnection(credentials?: EvolutionAPICredentials): Promise<EvolutionAPIResponse> {
+export async function testEvolutionAPIConnection(credentials?: { apiUrl?: string; apiKey?: string }): Promise<EvolutionAPIResponse> {
   try {
-    // If no credentials are provided, try to get them from localStorage
-    if (!credentials) {
-      const storedCreds = localStorage.getItem('evolution_api_credentials');
-      if (storedCreds) {
-        credentials = JSON.parse(storedCreds);
-      }
+    console.log("Testing Evolution API connection", credentials ? "with custom credentials" : "with default credentials");
+    
+    let requestBody: any = { action: "test_connection" };
+    
+    // Add credentials to request if provided
+    if (credentials?.apiUrl && credentials?.apiKey) {
+      // Remove trailing slashes from API URL to prevent double-slash issues
+      const formattedApiUrl = credentials.apiUrl.replace(/\/+$/, '');
+      
+      requestBody.credentials = {
+        apiUrl: formattedApiUrl,
+        apiKey: credentials.apiKey
+      };
     }
     
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
-      body: { 
-        action: "test_connection", 
-        credentials
-      }
+      body: requestBody
     });
     
     if (error) {
@@ -63,12 +69,22 @@ export async function testEvolutionAPIConnection(credentials?: EvolutionAPICrede
       };
     }
     
+    console.log("Test connection response:", data);
+    
+    if (!data) {
+      return {
+        success: false,
+        error: "Resposta vazia da API",
+        details: "A função retornou uma resposta vazia"
+      };
+    }
+    
     return data;
   } catch (error: any) {
-    console.error("Error testing Evolution API connection:", error);
+    console.error("Evolution API Connection Test Error:", error);
     return {
       success: false,
-      error: error.message || "Erro ao testar conexão",
+      error: error.message || "Erro ao testar conexão com a Evolution API",
       details: error.stack || JSON.stringify(error)
     };
   }

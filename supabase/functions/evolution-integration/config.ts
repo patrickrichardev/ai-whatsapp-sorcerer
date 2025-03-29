@@ -14,3 +14,8 @@ export let customCredentials: { apiUrl: string; apiKey: string } = {
   apiUrl: '',
   apiKey: ''
 };
+
+// Helper function to safely join URL parts without double slashes
+export function joinUrl(base: string, path: string): string {
+  return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+}

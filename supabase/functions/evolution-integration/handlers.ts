@@ -1,6 +1,6 @@
 
 import { corsHeaders, customCredentials } from "./config.ts";
-import { getCredentials, createSupabaseClient, createResponse, createErrorResponse } from "./utils.ts";
+import { getCredentials, createSupabaseClient, createResponse, createErrorResponse, callEvolutionAPI } from "./utils.ts";
 
 // Handler for updating credentials
 export async function handleUpdateCredentials(credentials?: { apiUrl?: string; apiKey?: string }) {
@@ -29,22 +29,11 @@ export async function handleTestConnection(credentials?: { apiUrl?: string; apiK
     console.log(`Using Evolution API Key: ${evolutionApiKey ? '***' + evolutionApiKey.slice(-4) : 'none'}`);
     
     // Test connection to Evolution API
-    const response = await fetch(`${evolutionApiUrl}/instance/info`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      },
-      // Use AbortController to set a timeout
-      signal: AbortSignal.timeout(10000) // 10 second timeout
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API returned status ${response.status}: ${errorText}`);
-    }
-    
-    const data = await response.json();
+    const data = await callEvolutionAPI(
+      evolutionApiUrl,
+      'instance/info',
+      evolutionApiKey
+    );
     
     return createResponse({ 
       success: true, 
@@ -87,45 +76,29 @@ export async function handleConnect(
     console.log(`Using API Key: ***${evolutionApiKey ? evolutionApiKey.slice(-4) : ''}`);
     
     // Criar instância se não existir
-    const createInstanceResponse = await fetch(`${evolutionApiUrl}/instance/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      },
-      body: JSON.stringify({
+    const createInstanceData = await callEvolutionAPI(
+      evolutionApiUrl,
+      'instance/create',
+      evolutionApiKey,
+      'POST',
+      {
         instanceName,
         token: connection_id,
         qrcode: true
-      })
-    });
+      }
+    );
 
-    if (!createInstanceResponse.ok) {
-      const errorText = await createInstanceResponse.text();
-      console.error("Error creating instance:", errorText);
-      throw new Error(`Falha ao criar instância: ${errorText}`);
-    }
-
-    const createInstanceData = await createInstanceResponse.json();
     console.log("Instance creation response:", createInstanceData);
 
     // Conectar instância
     console.log(`Connecting to instance: ${instanceName}`);
-    const connectResponse = await fetch(`${evolutionApiUrl}/instance/connect/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      }
-    });
+    const connectionData = await callEvolutionAPI(
+      evolutionApiUrl,
+      `instance/connect/${instanceName}`,
+      evolutionApiKey,
+      'POST'
+    );
 
-    if (!connectResponse.ok) {
-      const errorText = await connectResponse.text();
-      console.error("Error connecting to instance:", errorText);
-      throw new Error(`Falha ao conectar à instância: ${errorText}`);
-    }
-
-    const connectionData = await connectResponse.json();
     console.log("Connection response:", connectionData);
     
     if (connectionData.qrcode) {
@@ -172,20 +145,13 @@ export async function handleStatus(
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     console.log(`Checking status for instance: ${instanceName}`);
-    const statusResponse = await fetch(`${evolutionApiUrl}/instance/connectionState/${instanceName}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      }
-    });
-
-    if (!statusResponse.ok) {
-      const errorText = await statusResponse.text();
-      console.error("Error checking instance status:", errorText);
-      throw new Error(`Falha ao verificar status: ${errorText}`);
-    }
-
-    const statusData = await statusResponse.json();
+    
+    const statusData = await callEvolutionAPI(
+      evolutionApiUrl,
+      `instance/connectionState/${instanceName}`,
+      evolutionApiKey
+    );
+    
     console.log("Status data:", statusData);
     
     if (statusData.state === 'open') {
@@ -205,34 +171,27 @@ export async function handleStatus(
 
     // Se não estiver conectado, tenta obter novo QR code
     console.log(`Getting QR code for instance: ${instanceName}`);
-    const qrResponse = await fetch(`${evolutionApiUrl}/instance/qrcode/${instanceName}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      }
-    });
-
-    if (!qrResponse.ok) {
-      const errorText = await qrResponse.text();
-      console.error("Error getting QR code:", errorText);
-      // Don't throw here, just return the current status
-      return createResponse({ 
-        success: true,
-        status: statusData.state || 'unknown',
-        error: `Não foi possível obter QR code: ${errorText}`
-      });
-    }
-
-    const qrData = await qrResponse.json();
-    console.log("QR code data:", qrData);
     
-    if (qrData.qrcode) {
-      const qr = qrData.qrcode.split(',')[1] || qrData.qrcode;
-      return createResponse({ 
-        success: true,
-        qr, 
-        status: 'awaiting_scan' 
-      });
+    try {
+      const qrData = await callEvolutionAPI(
+        evolutionApiUrl,
+        `instance/qrcode/${instanceName}`,
+        evolutionApiKey
+      );
+      
+      console.log("QR code data:", qrData);
+      
+      if (qrData.qrcode) {
+        const qr = qrData.qrcode.split(',')[1] || qrData.qrcode;
+        return createResponse({ 
+          success: true,
+          qr, 
+          status: 'awaiting_scan' 
+        });
+      }
+    } catch (qrError) {
+      console.warn("Could not get QR code:", qrError);
+      // Continue with current status
     }
 
     return createResponse({ 
@@ -264,24 +223,17 @@ export async function handleSend(
     const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
-    const sendResponse = await fetch(`${evolutionApiUrl}/message/text/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      },
-      body: JSON.stringify({
+    const responseData = await callEvolutionAPI(
+      evolutionApiUrl,
+      `message/text/${instanceName}`,
+      evolutionApiKey,
+      'POST',
+      {
         number: phone,
         text: message
-      })
-    });
+      }
+    );
 
-    if (!sendResponse.ok) {
-      const errorText = await sendResponse.text();
-      throw new Error(`Falha ao enviar mensagem: ${errorText}`);
-    }
-
-    const responseData = await sendResponse.json();
     return createResponse({ 
       success: true,
       data: responseData
@@ -305,30 +257,27 @@ export async function handleDisconnect(
     const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
-    const logoutResponse = await fetch(`${evolutionApiUrl}/instance/logout/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      }
-    });
-
-    if (!logoutResponse.ok) {
-      const errorText = await logoutResponse.text();
-      throw new Error(`Falha ao desconectar: ${errorText}`);
+    try {
+      await callEvolutionAPI(
+        evolutionApiUrl,
+        `instance/logout/${instanceName}`,
+        evolutionApiKey,
+        'POST'
+      );
+    } catch (logoutError) {
+      console.warn(`Warning: Logout failed: ${logoutError.message}`);
+      // Continue with deletion even if logout failed
     }
 
-    const deleteResponse = await fetch(`${evolutionApiUrl}/instance/delete/${instanceName}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      }
-    });
-
-    if (!deleteResponse.ok) {
-      const errorText = await deleteResponse.text();
-      console.warn(`Warning: Could not delete instance: ${errorText}`);
+    try {
+      await callEvolutionAPI(
+        evolutionApiUrl,
+        `instance/delete/${instanceName}`,
+        evolutionApiKey,
+        'DELETE'
+      );
+    } catch (deleteError) {
+      console.warn(`Warning: Delete instance failed: ${deleteError.message}`);
       // Continue with the process even if deletion failed
     }
 
