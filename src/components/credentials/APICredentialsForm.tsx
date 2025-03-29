@@ -26,8 +26,10 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
     
     setIsLoading(true);
     try {
-      // Remover /manager se tiver no final da URL
-      const cleanUrl = apiUrl.replace(/\/manager\/?$/, '');
+      // Clean the URL - remove trailing slashes and /manager or /api if present
+      const cleanUrl = apiUrl.replace(/\/+$/, '')
+                             .replace(/\/manager\/?$/, '')
+                             .replace(/\/api\/?$/, '');
       
       const updateResult = await updateEvolutionAPICredentials(cleanUrl, apiKey);
       
@@ -64,7 +66,7 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
             onChange={(e) => setApiUrl(e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
-            URL da sua instância da Evolution API (sem /manager no final)
+            URL da sua instância da Evolution API (sem /api no final)
           </p>
         </div>
         

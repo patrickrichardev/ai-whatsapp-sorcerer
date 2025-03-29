@@ -17,11 +17,13 @@ export function createSupabaseClient(req: Request) {
 export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: string }) {
   // Use the credentials from the request first, if provided
   if (credentials?.apiUrl && credentials?.apiKey) {
-    // Remover /manager se estiver presente
-    const cleanApiUrl = credentials.apiUrl.replace(/\/manager\/?$/, '');
+    // Clean up the URL - remove trailing slashes and /manager or /api if present
+    const cleanApiUrl = credentials.apiUrl.replace(/\/+$/, '')
+                                         .replace(/\/manager\/?$/, '')
+                                         .replace(/\/api\/?$/, '');
     
     return {
-      evolutionApiUrl: cleanApiUrl,
+      evolutionApiUrl: cleanApiUrl + '/api', // Always add /api
       evolutionApiKey: credentials.apiKey
     };
   }
@@ -29,19 +31,27 @@ export async function getCredentials(credentials?: { apiUrl?: string; apiKey?: s
   // Custom credentials object from config (used for runtime updates)
   const { customCredentials } = await import("./config.ts");
   if (customCredentials.apiUrl && customCredentials.apiKey) {
-    // Garantir que não tenha /manager no final
-    const cleanApiUrl = customCredentials.apiUrl.replace(/\/manager\/?$/, '');
+    // Clean up the URL
+    const cleanApiUrl = customCredentials.apiUrl.replace(/\/+$/, '')
+                                              .replace(/\/manager\/?$/, '')
+                                              .replace(/\/api\/?$/, '');
     
     return {
-      evolutionApiUrl: cleanApiUrl,
+      evolutionApiUrl: cleanApiUrl + '/api', // Always add /api
       evolutionApiKey: customCredentials.apiKey
     };
   }
   
   // Fall back to environment variables
   let envApiUrl = Deno.env.get('EVOLUTION_API_URL') || '';
-  // Remover /manager do final da URL do ambiente se existir
-  envApiUrl = envApiUrl.replace(/\/manager\/?$/, '');
+  // Clean up the URL from environment variables
+  envApiUrl = envApiUrl.replace(/\/+$/, '')
+                       .replace(/\/manager\/?$/, '')
+                       .replace(/\/api\/?$/, '');
+  
+  if (envApiUrl) {
+    envApiUrl = envApiUrl + '/api'; // Add /api if URL is present
+  }
   
   return {
     evolutionApiUrl: envApiUrl,
@@ -57,8 +67,8 @@ export async function callEvolutionAPI(
   method = 'GET',
   body?: any
 ) {
-  // Verificação crítica: nunca adicionar /manager/ no início do endpoint
-  // A URL base já deve estar sem /manager no final
+  // Unified URL construction - don't add /manager or additional /api
+  // as the baseUrl should already have /api
   const url = joinUrl(baseUrl, endpoint);
   console.log(`URL FINAL PARA CHAMADA: ${url}`);
 
