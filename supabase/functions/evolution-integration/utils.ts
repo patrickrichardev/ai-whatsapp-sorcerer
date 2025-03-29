@@ -62,7 +62,7 @@ export async function callEvolutionAPI(
   console.log(`[VERBOSE] Base URL (raw): "${baseUrl}"`);
   console.log(`[VERBOSE] Endpoint (raw): "${endpoint}"`);
   
-  // Unified URL construction
+  // Unified URL construction - DO NOT add "/manager" to the URL
   const url = joinUrl(baseUrl, endpoint);
   console.log(`[VERBOSE] Final URL: "${url}"`);
 
