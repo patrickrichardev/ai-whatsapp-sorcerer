@@ -1,14 +1,14 @@
 
 import { useState } from "react";
-import { updateEvolutionAPICredentials, testEvolutionAPIConnection } from "@/lib/evolution-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { testEvolutionAPIConnection, updateEvolutionAPICredentials } from "@/lib/evolution-api/connection";
 import { toast } from "sonner";
 
 interface APICredentialsFormProps {
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
 export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
@@ -20,87 +20,74 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
     e.preventDefault();
     
     if (!apiUrl || !apiKey) {
-      toast.error("Por favor, preencha todos os campos");
+      toast.error("Por favor, forneça a URL da API e a chave de API");
       return;
     }
     
     setIsLoading(true);
-    
     try {
-      // Atualiza as credenciais localmente primeiro
-      updateEvolutionAPICredentials({ apiUrl, apiKey });
+      const updateResult = await updateEvolutionAPICredentials(apiUrl, apiKey);
       
-      // Testa a conexão
-      const response = await testEvolutionAPIConnection({ apiUrl, apiKey });
-      
-      if (!response.success) {
-        throw new Error(response.error || "Falha ao testar conexão");
+      if (!updateResult.success) {
+        throw new Error(updateResult.error || "Erro ao atualizar credenciais");
       }
       
-      toast.success("Conexão estabelecida com sucesso!");
+      // Teste a conexão com as novas credenciais
+      const testResult = await testEvolutionAPIConnection({ apiUrl, apiKey });
       
-      if (onSuccess) {
-        onSuccess();
+      if (!testResult.success) {
+        throw new Error(testResult.error || "Falha ao testar a conexão");
       }
+      
+      toast.success("Credenciais atualizadas com sucesso");
+      onSuccess();
     } catch (error: any) {
-      console.error("Erro ao testar conexão:", error);
-      toast.error(`Erro ao testar conexão: ${error.message}`);
+      console.error("Error setting credentials:", error);
+      toast.error(`Falha ao configurar API: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Configuração da Evolution API</h2>
-        <p className="text-sm text-muted-foreground">
-          Configure os detalhes de conexão para o servidor da Evolution API
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="api-url">URL da API</Label>
-          <Input 
-            id="api-url" 
-            placeholder="https://sua-evolution-api.com" 
+          <Label htmlFor="api-url">URL da Evolution API</Label>
+          <Input
+            id="api-url"
+            placeholder="https://sua-evolution-api.com/manager"
             value={apiUrl}
             onChange={(e) => setApiUrl(e.target.value)}
-            required
           />
-          <p className="text-xs text-muted-foreground">
-            Por exemplo: https://seu-servidor.com
+          <p className="text-sm text-muted-foreground">
+            URL da sua instância da Evolution API
           </p>
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="api-key">Chave da API</Label>
-          <Input 
-            id="api-key" 
+          <Input
+            id="api-key"
             type="password"
-            placeholder="Sua chave de API" 
+            placeholder="Sua chave da API"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            required
           />
+          <p className="text-sm text-muted-foreground">
+            Chave de autenticação para sua API
+          </p>
         </div>
-        
-        <div className="pt-2">
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Testando Conexão...
-              </>
-            ) : "Salvar Configurações"}
-          </Button>
-        </div>
-      </form>
-    </div>
+      </div>
+      
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Conectando...
+          </>
+        ) : "Salvar Configurações"}
+      </Button>
+    </form>
   );
 }

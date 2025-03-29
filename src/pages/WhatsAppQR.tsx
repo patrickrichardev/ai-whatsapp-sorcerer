@@ -13,7 +13,7 @@ import { useWhatsAppConnection } from "@/hooks/useWhatsAppConnection";
 
 const WhatsAppQR = () => {
   const [searchParams] = useSearchParams();
-  const agentId = searchParams.get("agent_id");
+  const connectionId = searchParams.get("connection_id");
   const navigate = useNavigate();
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
   
@@ -31,7 +31,7 @@ const WhatsAppQR = () => {
     checkStatus,
     handleRefresh,
     setAttempts
-  } = useWhatsAppConnection(agentId);
+  } = useWhatsAppConnection(connectionId);
 
   const handleCredentialsSuccess = () => {
     setShowCredentialsForm(false);
@@ -59,7 +59,7 @@ const WhatsAppQR = () => {
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [agentId, status]);
+  }, [connectionId, status]);
 
   useEffect(() => {
     if (status === "awaiting_scan") {
@@ -67,9 +67,9 @@ const WhatsAppQR = () => {
     }
   }, [qrCode]);
 
-  if (!agentId) {
-    toast.error("ID do dispositivo não fornecido");
-    navigate("/connect-whatsapp");
+  if (!connectionId) {
+    toast.error("ID da conexão não fornecido");
+    navigate("/devices");
     return null;
   }
 

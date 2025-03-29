@@ -10,7 +10,7 @@ import { EvolutionAPIResponse } from "@/lib/evolution-api/types";
 
 export type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection";
 
-export function useWhatsAppConnection(agentId: string | null) {
+export function useWhatsAppConnection(connectionId: string | null) {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("testing_connection");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -60,8 +60,8 @@ export function useWhatsAppConnection(agentId: string | null) {
   };
 
   const initializeConnection = async () => {
-    if (!agentId) {
-      toast.error("ID do agente não fornecido");
+    if (!connectionId) {
+      toast.error("ID da conexão não fornecido");
       return;
     }
 
@@ -75,9 +75,9 @@ export function useWhatsAppConnection(agentId: string | null) {
       setErrorMessage(null);
       setDetailedErrors([]);
       setApiResponse(null);
-      console.log("Iniciando conexão para agente:", agentId);
+      console.log("Iniciando conexão para ID:", connectionId);
       
-      const response = await initializeWhatsAppInstance(agentId);
+      const response = await initializeWhatsAppInstance(connectionId);
       console.log("Resposta da inicialização:", response);
       
       setApiResponse(response);
@@ -120,10 +120,10 @@ export function useWhatsAppConnection(agentId: string | null) {
   };
 
   const checkStatus = async () => {
-    if (!agentId || status === "connected" || status === "testing_connection") return;
+    if (!connectionId || status === "connected" || status === "testing_connection") return;
 
     try {
-      const response = await checkWhatsAppStatus(agentId);
+      const response = await checkWhatsAppStatus(connectionId);
       console.log("Status check response:", response);
 
       setApiResponse(response);
