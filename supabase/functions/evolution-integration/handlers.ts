@@ -1,3 +1,4 @@
+
 import { corsHeaders, customCredentials } from "./config.ts";
 import { getCredentials, createSupabaseClient, createResponse, createErrorResponse, callEvolutionAPI } from "./utils.ts";
 
@@ -10,8 +11,11 @@ export async function handleUpdateCredentials(credentials?: { apiUrl?: string; a
     }, 400);
   }
   
+  // Remove /manager if present at the end of the URL
+  const cleanApiUrl = credentials.apiUrl.replace(/\/manager$/, '');
+  
   // Store the custom credentials
-  customCredentials.apiUrl = credentials.apiUrl;
+  customCredentials.apiUrl = cleanApiUrl;
   customCredentials.apiKey = credentials.apiKey;
   
   return createResponse({ 

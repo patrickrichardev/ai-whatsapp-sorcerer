@@ -26,14 +26,17 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
     
     setIsLoading(true);
     try {
-      const updateResult = await updateEvolutionAPICredentials(apiUrl, apiKey);
+      // Remover /manager se tiver no final da URL
+      const cleanUrl = apiUrl.replace(/\/manager$/, '');
+      
+      const updateResult = await updateEvolutionAPICredentials(cleanUrl, apiKey);
       
       if (!updateResult.success) {
         throw new Error(updateResult.error || "Erro ao atualizar credenciais");
       }
       
       // Teste a conexão com as novas credenciais
-      const testResult = await testEvolutionAPIConnection({ apiUrl, apiKey });
+      const testResult = await testEvolutionAPIConnection({ apiUrl: cleanUrl, apiKey });
       
       if (!testResult.success) {
         throw new Error(testResult.error || "Falha ao testar a conexão");
@@ -56,12 +59,12 @@ export function APICredentialsForm({ onSuccess }: APICredentialsFormProps) {
           <Label htmlFor="api-url">URL da Evolution API</Label>
           <Input
             id="api-url"
-            placeholder="https://sua-evolution-api.com/manager"
+            placeholder="https://sua-evolution-api.com"
             value={apiUrl}
             onChange={(e) => setApiUrl(e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
-            URL da sua instância da Evolution API
+            URL da sua instância da Evolution API (sem /manager no final)
           </p>
         </div>
         

@@ -5,8 +5,8 @@ export const corsHeaders = {
 };
 
 // Default API configuration 
-// Fix the double slash issue by ensuring there's no trailing slash
-export const DEFAULT_EVOLUTION_API_URL = 'https://evolutionapi-evolution-api.nqfltx.easypanel.host/manager';
+// Ajustado para não conter o `/manager` no final, pois isso já vem nos endpoints
+export const DEFAULT_EVOLUTION_API_URL = 'https://evolutionapi-evolution-api.nqfltx.easypanel.host';
 export const DEFAULT_EVOLUTION_API_KEY = '';
 
 // Store custom credentials (temporary, for current session)

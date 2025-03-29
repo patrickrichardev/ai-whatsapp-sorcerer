@@ -47,7 +47,12 @@ export async function callEvolutionAPI(
   method = 'GET',
   body?: any
 ) {
-  const url = joinUrl(baseUrl, endpoint);
+  // Agora o endpoint deve incluir /manager para rotas corretas
+  const adjustedEndpoint = endpoint.startsWith('instance/') || endpoint.startsWith('message/') 
+    ? `manager/${endpoint}` 
+    : endpoint;
+    
+  const url = joinUrl(baseUrl, adjustedEndpoint);
   console.log(`Making ${method} request to Evolution API: ${url}`);
 
   try {
