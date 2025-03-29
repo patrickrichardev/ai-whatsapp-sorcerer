@@ -11,8 +11,8 @@ export async function handleUpdateCredentials(credentials?: { apiUrl?: string; a
     }, 400);
   }
   
-  // Remove /manager if present at the end of the URL
-  const cleanApiUrl = credentials.apiUrl.replace(/\/manager\/?$/, '');
+  // Remove trailing slashes if present
+  const cleanApiUrl = credentials.apiUrl.replace(/\/+$/, '');
   
   // Store the custom credentials
   customCredentials.apiUrl = cleanApiUrl;
@@ -31,7 +31,7 @@ export async function handleTestConnection(credentials?: { apiUrl?: string; apiK
     console.log(`Using Evolution API URL: ${evolutionApiUrl}`);
     console.log(`Using Evolution API Key: ${evolutionApiKey ? '***' + evolutionApiKey.slice(-4) : 'none'}`);
     
-    // Test connection to Evolution API - Importante: sem "manager/" no início
+    // Test connection to Evolution API
     const data = await callEvolutionAPI(
       evolutionApiUrl,
       'instance/info',
