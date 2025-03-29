@@ -57,9 +57,14 @@ export async function callEvolutionAPI(
   method = 'GET',
   body?: any
 ) {
+  // More verbose logging for URL construction
+  console.log(`[VERBOSE] Making API call to Evolution API:`);
+  console.log(`[VERBOSE] Base URL (raw): "${baseUrl}"`);
+  console.log(`[VERBOSE] Endpoint (raw): "${endpoint}"`);
+  
   // Unified URL construction
   const url = joinUrl(baseUrl, endpoint);
-  console.log(`URL FINAL PARA CHAMADA: ${url}`);
+  console.log(`[VERBOSE] Final URL: "${url}"`);
 
   try {
     const response = await fetch(url, {

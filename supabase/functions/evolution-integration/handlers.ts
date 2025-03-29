@@ -109,6 +109,11 @@ export async function handleConnect(
       console.log(`Evolution API URL: ${evolutionApiUrl}`);
       console.log(`Using API Key: ***${evolutionApiKey ? evolutionApiKey.slice(-4) : ''}`);
       
+      // Add debug logs for URL construction
+      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+      console.log('[DEBUG] endpoint:', 'instance/create');
+      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/create`);
+      
       // Criar instância se não existir - Endpoint correto sem "manager/"
       const createInstanceData = await callEvolutionAPI(
         evolutionApiUrl,
@@ -124,6 +129,11 @@ export async function handleConnect(
 
       console.log("Instance creation response:", createInstanceData);
 
+      // Add debug logs for connect URL
+      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+      console.log('[DEBUG] endpoint:', `instance/connect/${instanceName}`);
+      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connect/${instanceName}`);
+      
       // Conectar instância - Endpoint correto sem "manager/"
       console.log(`Connecting to instance: ${instanceName}`);
       const connectionData = await callEvolutionAPI(
@@ -188,6 +198,11 @@ export async function handleStatus(
     
     console.log(`Checking status for instance: ${instanceName}`);
     
+    // Add debug logs for status URL
+    console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+    console.log('[DEBUG] endpoint:', `instance/connectionState/${instanceName}`);
+    console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connectionState/${instanceName}`);
+    
     // Endpoint correto sem "manager/"
     const statusData = await callEvolutionAPI(
       evolutionApiUrl,
@@ -216,6 +231,11 @@ export async function handleStatus(
     console.log(`Getting QR code for instance: ${instanceName}`);
     
     try {
+      // Add debug logs for QR code URL
+      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+      console.log('[DEBUG] endpoint:', `instance/qrcode/${instanceName}`);
+      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/qrcode/${instanceName}`);
+      
       // Endpoint correto sem "manager/"
       const qrData = await callEvolutionAPI(
         evolutionApiUrl,
@@ -267,6 +287,11 @@ export async function handleSend(
     const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
+    // Add debug logs for send message URL
+    console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+    console.log('[DEBUG] endpoint:', `message/text/${instanceName}`);
+    console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/message/text/${instanceName}`);
+    
     // Endpoint correto sem "manager/"
     const responseData = await callEvolutionAPI(
       evolutionApiUrl,
@@ -303,6 +328,11 @@ export async function handleDisconnect(
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
     try {
+      // Add debug logs for logout URL
+      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+      console.log('[DEBUG] endpoint:', `instance/logout/${instanceName}`);
+      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/logout/${instanceName}`);
+      
       // Endpoint correto sem "manager/"
       await callEvolutionAPI(
         evolutionApiUrl,
@@ -316,6 +346,11 @@ export async function handleDisconnect(
     }
 
     try {
+      // Add debug logs for delete URL
+      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+      console.log('[DEBUG] endpoint:', `instance/delete/${instanceName}`);
+      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/delete/${instanceName}`);
+      
       // Endpoint correto sem "manager/"
       await callEvolutionAPI(
         evolutionApiUrl,
