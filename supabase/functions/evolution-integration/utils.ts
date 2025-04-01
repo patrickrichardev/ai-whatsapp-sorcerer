@@ -67,15 +67,21 @@ export async function callEvolutionAPI(
   console.log(`[VERBOSE] Final URL: "${url}"`);
 
   try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Only add apikey if it's provided and not empty
+    if (apiKey && apiKey.trim() !== '') {
+      headers['apikey'] = apiKey;
+    }
+    
     const response = await fetch(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': apiKey
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       // Use AbortController to set a timeout
-      signal: AbortSignal.timeout(15000) // 15 second timeout
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
 
     // Log API response status

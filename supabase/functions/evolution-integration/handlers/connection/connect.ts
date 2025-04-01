@@ -51,10 +51,39 @@ export async function handleConnect(
       console.log(`Evolution API URL: ${evolutionApiUrl}`);
       console.log(`Using API Key: ***${evolutionApiKey ? evolutionApiKey.slice(-4) : ''}`);
       
-      // Add debug logs for URL construction
-      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-      console.log('[DEBUG] endpoint:', 'instance/create');
-      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/create`);
+      // Check if instance already exists
+      try {
+        const checkInstanceResponse = await callEvolutionAPI(
+          evolutionApiUrl,
+          `instance/connectionState/${instanceName}`,
+          evolutionApiKey,
+          'GET'
+        );
+        
+        console.log("Instance check response:", checkInstanceResponse);
+        
+        // If instance exists and is already connected
+        if (checkInstanceResponse && checkInstanceResponse.state === 'open') {
+          await supabaseClient
+            .from('agent_connections')
+            .update({
+              is_active: true,
+              connection_data: { 
+                status: 'connected', 
+                name: instanceName || 'WhatsApp Instance' 
+              }
+            })
+            .eq('id', connection_id);
+          
+          return createResponse({ 
+            success: true,
+            status: 'connected' 
+          });
+        }
+      } catch (error) {
+        // If check fails, instance probably doesn't exist, continue with creation
+        console.log("Instance doesn't exist, proceeding with creation:", error.message);
+      }
       
       // Criar instância com a nova configuração
       const createInstanceData = await callEvolutionAPI(
@@ -78,8 +107,10 @@ export async function handleConnect(
 
       console.log("Instance creation response:", createInstanceData);
 
-      // CORREÇÃO: Após a criação da instância, vamos obter o QR code diretamente
-      // ao invés de tentar usar o endpoint connect que está dando 404
+      // Add a delay before requesting the QR code to allow the instance to initialize
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Try get the QR code
       console.log(`Getting QR code for instance: ${instanceName}`);
       
       const qrResponse = await callEvolutionAPI(

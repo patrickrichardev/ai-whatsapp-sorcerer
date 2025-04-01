@@ -19,6 +19,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
   const [detailedErrors, setDetailedErrors] = useState<string[]>([]);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null);
+  const [checkInterval, setCheckInterval] = useState<number | null>(null);
 
   const testConnection = async () => {
     try {
@@ -102,6 +103,9 @@ export function useWhatsAppConnection(connectionId: string | null) {
         console.log("QR Code recebido, tamanho:", qrData?.length);
         setQrCode(qrData);
         setStatus("awaiting_scan");
+        
+        // Start automatic status checking if QR code is received
+        startStatusCheck();
       } else if (response.status === "connected") {
         setStatus("connected");
       } else {
@@ -135,6 +139,13 @@ export function useWhatsAppConnection(connectionId: string | null) {
       if (response.status === "connected") {
         setStatus("connected");
         toast.success("WhatsApp conectado com sucesso!");
+        
+        // Stop checking once connected
+        if (checkInterval) {
+          clearInterval(checkInterval);
+          setCheckInterval(null);
+        }
+        
         return true;
       } else if ((response.qr || response.qrcode) && (response.qr || response.qrcode) !== qrCode) {
         const qrData = response.qr || response.qrcode;
@@ -149,6 +160,23 @@ export function useWhatsAppConnection(connectionId: string | null) {
     }
   };
 
+  const startStatusCheck = () => {
+    // Clear any existing interval
+    if (checkInterval) {
+      clearInterval(checkInterval);
+    }
+    
+    // Check status immediately
+    checkStatus();
+    
+    // Then set up interval
+    const interval = setInterval(() => {
+      checkStatus();
+    }, 5000); // Check every 5 seconds
+    
+    setCheckInterval(interval);
+  };
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     if (status === "error" && (connectionOk === null || connectionOk === false)) {
@@ -157,6 +185,20 @@ export function useWhatsAppConnection(connectionId: string | null) {
     await initializeConnection();
     setIsRefreshing(false);
   };
+
+  // Initialize connection on mount
+  useEffect(() => {
+    if (connectionId) {
+      initializeConnection();
+    }
+    
+    return () => {
+      // Clear any interval on unmount
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+    };
+  }, [connectionId]);
 
   return {
     qrCode,

@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { 
   Dialog, 
@@ -12,7 +13,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { initializeWhatsAppInstance } from "@/lib/evolution-api/instance"
 import { supabase } from "@/lib/supabase"
 import { useAgents } from "@/hooks/useAgents"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -45,6 +45,8 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
     
     setIsCreatingInstance(true)
     try {
+      console.log("Creating instance with name:", instanceName);
+      
       // Create a WhatsApp connection record directly with a unique ID
       const connectionId = crypto.randomUUID()
       
@@ -63,7 +65,12 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
           }
         })
       
-      if (connectionError) throw connectionError
+      if (connectionError) {
+        console.error("Error creating connection:", connectionError);
+        throw connectionError;
+      }
+      
+      console.log("Connection created with ID:", connectionId);
       
       // Se selecionou "auto" e não há agentes disponíveis, cria um agente temporário
       if (selectedAgentId === "auto" && agents.length === 0) {
@@ -79,7 +86,10 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
           .select('id')
           .single()
         
-        if (agentError) throw agentError
+        if (agentError) {
+          console.error("Error creating agent:", agentError);
+          throw agentError;
+        }
         
         // Atualizar a conexão com o ID do novo agente
         if (newAgent) {
@@ -87,14 +97,19 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
             .from('agent_connections')
             .update({ agent_id: newAgent.id })
             .eq('id', connectionId)
+          
+          console.log("Updated connection with agent ID:", newAgent.id);
         }
       }
       
       toast.success("Instância criada com sucesso")
       onOpenChange(false)
+      
+      // Call onSuccess to refresh the devices list
       onSuccess()
       
       // Imediatamente redirecionar para a página do QR code
+      console.log("Redirecting to WhatsApp QR page with connection ID:", connectionId);
       navigate(`/whatsapp-qr?connection_id=${connectionId}`)
     } catch (error: any) {
       console.error("Erro ao criar instância:", error)
