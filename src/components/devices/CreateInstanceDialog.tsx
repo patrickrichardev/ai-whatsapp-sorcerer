@@ -139,7 +139,6 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
     }
   }
 
-  // This was causing the issue - we need to use useEffect instead of returning cleanup function directly
   useEffect(() => {
     let intervalId: number | undefined;
     
