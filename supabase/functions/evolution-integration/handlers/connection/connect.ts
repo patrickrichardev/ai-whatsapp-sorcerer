@@ -56,22 +56,23 @@ export async function handleConnect(
       console.log('[DEBUG] endpoint:', 'instance/create');
       console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/create`);
       
-      // Criar instância se não existir - Endpoint correto sem "manager/"
+      // Criar instância com a nova configuração
       const createInstanceData = await callEvolutionAPI(
         evolutionApiUrl,
         'instance/create',
         evolutionApiKey,
         'POST',
         {
-          instanceName,
-          token: connection_id,
-          type: 'whatsapp',
-          qrcode: true,
-          integration: {
-            integration_type: 'whatsapp',
-            use_qrcode: true,
-            name: instanceName
-          }
+          instanceName,                  // nome da instância, tipo: conn_abc123
+          token: connection_id,         // identificador único, pode usar o próprio connection_id
+          qrcode: true,                 // vai gerar o QR Code para parear com o WhatsApp
+          integration: 'WHATSAPP-BAILEYS', // ESSENCIAL: define o tipo de integração
+          reject_call: true,
+          groupsIgnore: true,
+          alwaysOnline: true,
+          readMessages: true,
+          readStatus: true,
+          syncFullHistory: true
         }
       );
 
