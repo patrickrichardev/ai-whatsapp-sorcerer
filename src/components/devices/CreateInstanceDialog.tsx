@@ -139,23 +139,29 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
     }
   }
 
-  // Check status periodically when showing QR code
-  if (creationStep === "qrcode" && connectionId) {
-    const intervalId = setInterval(async () => {
-      const isConnected = await checkStatus()
-      if (isConnected) {
-        clearInterval(intervalId)
-        toast.success("WhatsApp conectado com sucesso!")
-        setTimeout(() => {
-          onOpenChange(false)
-          onSuccess()
-        }, 1500)
-      }
-    }, 5000)
+  // This was causing the issue - we need to use useEffect instead of returning cleanup function directly
+  useEffect(() => {
+    let intervalId: number | undefined;
     
-    // Clear interval when component unmounts
-    return () => clearInterval(intervalId)
-  }
+    // Only set up interval when we're showing QR code and have a connection ID
+    if (creationStep === "qrcode" && connectionId) {
+      intervalId = window.setInterval(async () => {
+        const isConnected = await checkStatus();
+        if (isConnected) {
+          toast.success("WhatsApp conectado com sucesso!");
+          setTimeout(() => {
+            onOpenChange(false);
+            onSuccess();
+          }, 1500);
+        }
+      }, 5000);
+    }
+    
+    // Return cleanup function
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [creationStep, connectionId, checkStatus, onOpenChange, onSuccess]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
