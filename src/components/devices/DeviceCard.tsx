@@ -31,8 +31,12 @@ export function DeviceCard({ device, onDelete }: DeviceCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   
-  // Get instance name from connection_data
-  const instanceName = device.connection_data?.name || `Instância ${device.id.substring(0, 8)}`
+  // Get instance name from connection_data, ensure we never display "as"
+  const instanceName = 
+    device.connection_data?.name && 
+    device.connection_data.name !== "as" 
+      ? device.connection_data.name 
+      : `Instância ${device.id.substring(0, 8)}`
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -59,7 +63,7 @@ export function DeviceCard({ device, onDelete }: DeviceCardProps) {
           </div>
         </div>
         <div className="flex space-x-2">
-          <Link to={`/connect-whatsapp/qr?connection_id=${device.id}`}>
+          <Link to={`/whatsapp-qr?connection_id=${device.id}`}>
             <Button variant="outline" size="sm">
               Gerenciar
             </Button>
