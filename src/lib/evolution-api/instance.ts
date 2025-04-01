@@ -37,7 +37,10 @@ export async function initializeWhatsAppInstance(connectionId: string): Promise<
       return {
         success: false,
         error: data.error,
-        details: data.details || "Sem detalhes adicionais"
+        details: data.details || "Sem detalhes adicionais",
+        partialSuccess: data.partialSuccess || false,
+        instanceCreated: data.instanceCreated || false,
+        instanceName: data.instanceName
       };
     }
     
@@ -158,7 +161,12 @@ export async function testEvolutionAPIConnection(): Promise<EvolutionAPIResponse
     return {
       success: false,
       error: error.message || "Erro ao testar conexão com a Evolution API",
-      details: error.stack || JSON.stringify(error)
+      details: error.stack || JSON.stringify(error),
+      diagnostics: {
+        apiUrl: "Failed to retrieve",
+        requestData: null,
+        responseStatus: 0
+      }
     };
   }
 }

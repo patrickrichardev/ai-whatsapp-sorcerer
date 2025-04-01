@@ -19,15 +19,22 @@ export async function handleStatus(
     console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connectionState/${instanceName}`);
     
     // Endpoint correto sem "manager/"
-    const statusData = await callEvolutionAPI(
-      evolutionApiUrl,
-      `instance/connectionState/${instanceName}`,
-      evolutionApiKey
-    );
+    let statusData;
+    try {
+      statusData = await callEvolutionAPI(
+        evolutionApiUrl,
+        `instance/connectionState/${instanceName}`,
+        evolutionApiKey
+      );
+      
+      console.log("Status data:", statusData);
+    } catch (statusError) {
+      console.error("Error checking connection state:", statusError);
+      // Continue to QR code fetch attempt
+      statusData = { state: 'disconnected' };
+    }
     
-    console.log("Status data:", statusData);
-    
-    if (statusData.state === 'open') {
+    if (statusData.state === 'open' || statusData.state === 'connected') {
       await supabaseClient
         .from('agent_connections')
         .update({
@@ -62,6 +69,15 @@ export async function handleStatus(
       
       if (qrData.qrcode) {
         const qr = qrData.qrcode.split(',')[1] || qrData.qrcode;
+        
+        await supabaseClient
+          .from('agent_connections')
+          .update({
+            is_active: false,
+            connection_data: { status: 'awaiting_scan', qr }
+          })
+          .eq('id', connection_id);
+          
         return createResponse({ 
           success: true,
           qr, 

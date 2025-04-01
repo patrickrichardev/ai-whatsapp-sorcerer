@@ -68,11 +68,17 @@ export async function handleConnect(
           qrcode: true,                 // vai gerar o QR Code para parear com o WhatsApp
           integration: 'WHATSAPP-BAILEYS', // ESSENCIAL: define o tipo de integração
           reject_call: true,
+          msgCall: "Desculpe, não posso atender chamadas no momento.",
           groupsIgnore: true,
           alwaysOnline: true,
           readMessages: true,
           readStatus: true,
-          syncFullHistory: true
+          syncFullHistory: true,
+          webhookByEvents: false,
+          webhook: {
+            url: "",
+            enabled: false
+          }
         }
       );
 
@@ -83,40 +89,104 @@ export async function handleConnect(
       console.log('[DEBUG] endpoint:', `instance/connect/${instanceName}`);
       console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connect/${instanceName}`);
       
+      // Adicionar uma pausa de 1 segundo para garantir que a instância esteja pronta
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Conectar instância - Endpoint correto sem "manager/"
       console.log(`Connecting to instance: ${instanceName}`);
-      const connectionData = await callEvolutionAPI(
-        evolutionApiUrl,
-        `instance/connect/${instanceName}`,
-        evolutionApiKey,
-        'POST'
-      );
+      try {
+        const connectionData = await callEvolutionAPI(
+          evolutionApiUrl,
+          `instance/connect/${instanceName}`,
+          evolutionApiKey,
+          'POST'
+        );
 
-      console.log("Connection response:", connectionData);
-      
-      if (connectionData.qrcode) {
-        // Remove o prefixo "data:image/png;base64," do QR code
-        const qr = connectionData.qrcode.split(',')[1] || connectionData.qrcode;
+        console.log("Connection response:", connectionData);
+        
+        if (connectionData.qrcode) {
+          // Remove o prefixo "data:image/png;base64," do QR code
+          const qr = connectionData.qrcode.split(',')[1] || connectionData.qrcode;
 
-        await supabaseClient
-          .from('agent_connections')
-          .update({
-            is_active: false,
-            connection_data: { status: 'awaiting_scan', qr, name: connectionData.instance?.instanceName || 'WhatsApp Instance' }
-          })
-          .eq('id', connection_id);
+          await supabaseClient
+            .from('agent_connections')
+            .update({
+              is_active: false,
+              connection_data: { 
+                status: 'awaiting_scan', 
+                qr, 
+                name: connectionData.instance?.instanceName || instanceName
+              }
+            })
+            .eq('id', connection_id);
+
+          return createResponse({ 
+            success: true,
+            qr, 
+            status: 'awaiting_scan' 
+          });
+        }
 
         return createResponse({ 
           success: true,
-          qr, 
-          status: 'awaiting_scan' 
+          status: connectionData.state || 'unknown' 
+        });
+      } catch (connectionError) {
+        console.error("Error connecting to instance:", connectionError);
+        
+        // Mesmo com erro de conexão, tentamos recuperar o QR Code diretamente
+        try {
+          console.log("Attempting to fetch QR code directly...");
+          
+          // Adicionar uma pausa adicional para garantir que o QR code esteja disponível
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const qrData = await callEvolutionAPI(
+            evolutionApiUrl,
+            `instance/qrcode/${instanceName}`,
+            evolutionApiKey
+          );
+          
+          console.log("QR code response:", qrData);
+          
+          if (qrData.qrcode) {
+            // Remove o prefixo "data:image/png;base64," do QR code
+            const qr = qrData.qrcode.split(',')[1] || qrData.qrcode;
+
+            await supabaseClient
+              .from('agent_connections')
+              .update({
+                is_active: false,
+                connection_data: { 
+                  status: 'awaiting_scan', 
+                  qr, 
+                  name: instanceName
+                }
+              })
+              .eq('id', connection_id);
+
+            return createResponse({ 
+              success: true,
+              qr, 
+              status: 'awaiting_scan' 
+            });
+          }
+        } catch (qrError) {
+          console.error("Failed to fetch QR code:", qrError);
+          // Continue with the original error handling
+        }
+        
+        // Se chegamos aqui, não conseguimos conectar nem obter QR code
+        // Retornamos erro mas ainda dizemos que a instância foi criada
+        return createResponse({
+          success: true,
+          partialSuccess: true,
+          error: connectionError.message || "Erro ao conectar à instância, mas a instância foi criada com sucesso",
+          details: connectionError.toString(),
+          instanceCreated: true,
+          instanceName
         });
       }
-
-      return createResponse({ 
-        success: true,
-        status: connectionData.state || 'unknown' 
-      });
     } catch (error) {
       console.error('Erro ao conectar:', error);
       return createResponse({

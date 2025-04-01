@@ -19,6 +19,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
   const [detailedErrors, setDetailedErrors] = useState<string[]>([]);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null);
+  const [instanceData, setInstanceData] = useState<{instanceCreated: boolean; instanceName?: string} | null>(null);
 
   const testConnection = async () => {
     try {
@@ -75,6 +76,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
       setErrorMessage(null);
       setDetailedErrors([]);
       setApiResponse(null);
+      setInstanceData(null);
       console.log("Iniciando conexão para ID:", connectionId);
       
       const response = await initializeWhatsAppInstance(connectionId);
@@ -82,7 +84,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
       
       setApiResponse(response);
       
-      if (!response.success) {
+      if (!response.success && !response.partialSuccess) {
         console.error("Error response:", response);
         setStatus("error");
         setErrorMessage(response.error || "Erro desconhecido ao iniciar conexão");
@@ -97,6 +99,14 @@ export function useWhatsAppConnection(connectionId: string | null) {
         return;
       }
 
+      // Salvar dados da instância se ela foi criada
+      if (response.instanceCreated) {
+        setInstanceData({
+          instanceCreated: true,
+          instanceName: response.instanceName
+        });
+      }
+
       if (response.qr || response.qrcode) {
         const qrData = response.qr || response.qrcode;
         console.log("QR Code recebido, tamanho:", qrData?.length);
@@ -104,6 +114,15 @@ export function useWhatsAppConnection(connectionId: string | null) {
         setStatus("awaiting_scan");
       } else if (response.status === "connected") {
         setStatus("connected");
+      } else if (response.partialSuccess) {
+        // Se tivemos sucesso parcial (instância criada mas sem QR code ainda)
+        setStatus("awaiting_scan");
+        toast.info("Instância criada, buscando QR code...");
+        
+        // Aguardar um momento e tentar buscar o QR code
+        setTimeout(async () => {
+          await checkStatus();
+        }, 3000);
       } else {
         console.error("Resposta inesperada:", response);
         setStatus("error");
@@ -120,7 +139,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
   };
 
   const checkStatus = async () => {
-    if (!connectionId || status === "connected" || status === "testing_connection") return;
+    if (!connectionId || status === "connected" || status === "testing_connection") return false;
 
     try {
       const response = await checkWhatsAppStatus(connectionId);
@@ -154,7 +173,15 @@ export function useWhatsAppConnection(connectionId: string | null) {
     if (status === "error" && (connectionOk === null || connectionOk === false)) {
       await testConnection();
     }
-    await initializeConnection();
+    
+    if (instanceData?.instanceCreated) {
+      // Se a instância já foi criada, apenas verificar status e obter QR code
+      await checkStatus();
+    } else {
+      // Caso contrário, inicializar novamente
+      await initializeConnection();
+    }
+    
     setIsRefreshing(false);
   };
 
@@ -167,6 +194,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
     detailedErrors,
     apiResponse,
     connectionOk,
+    instanceData,
     testConnection,
     initializeConnection,
     checkStatus,
