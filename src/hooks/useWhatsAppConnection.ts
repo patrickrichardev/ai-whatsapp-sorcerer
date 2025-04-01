@@ -8,7 +8,7 @@ import {
 } from "@/lib/evolution-api";
 import { EvolutionAPIResponse } from "@/lib/evolution-api/types";
 
-export type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection";
+export type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection" | "pending";
 
 export function useWhatsAppConnection(connectionId: string | null) {
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -116,7 +116,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
         setStatus("connected");
       } else if (response.partialSuccess) {
         // Se tivemos sucesso parcial (instância criada mas sem QR code ainda)
-        setStatus("awaiting_scan");
+        setStatus("pending");
         toast.info("Instância criada, buscando QR code...");
         
         // Aguardar um momento e tentar buscar o QR code

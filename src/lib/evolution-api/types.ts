@@ -7,6 +7,9 @@ export interface EvolutionAPIResponse {
   status?: string;
   error?: string;
   details?: string;
+  partialSuccess?: boolean;
+  instanceCreated?: boolean;
+  instanceName?: string;
   diagnostics?: {
     apiUrl?: string;
     requestData?: any;
