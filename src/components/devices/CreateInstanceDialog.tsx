@@ -11,12 +11,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, Check, QrCode } from "lucide-react"
 import { toast } from "sonner"
 import { initializeWhatsAppInstance } from "@/lib/evolution-api/instance"
 import { supabase } from "@/lib/supabase"
 import { useAgents } from "@/hooks/useAgents"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { QRCodeDisplay } from "@/components/whatsapp/QRCodeDisplay"
+import { ConnectionStatus } from "@/components/whatsapp/ConnectionStatus"
+import { useWhatsAppConnection } from "@/hooks/useWhatsAppConnection"
 
 interface CreateInstanceDialogProps {
   isOpen: boolean
@@ -29,7 +32,19 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
   const [isCreatingInstance, setIsCreatingInstance] = useState(false)
   const [instanceName, setInstanceName] = useState("")
   const [selectedAgentId, setSelectedAgentId] = useState<string | "auto" | "none">("auto")
+  const [creationStep, setCreationStep] = useState<"form" | "connecting" | "qrcode">("form")
+  const [connectionId, setConnectionId] = useState<string | null>(null)
   const { agents } = useAgents(userId)
+  
+  const {
+    qrCode,
+    status,
+    isRefreshing,
+    attempts,
+    errorMessage,
+    checkStatus,
+    handleRefresh
+  } = useWhatsAppConnection(connectionId)
 
   const handleCreateInstance = async () => {
     if (!instanceName) {
@@ -43,9 +58,12 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
     }
     
     setIsCreatingInstance(true)
+    setCreationStep("connecting")
+    
     try {
       // Create a WhatsApp connection record directly with a unique ID
       const connectionId = crypto.randomUUID()
+      setConnectionId(connectionId)
       
       // Create the connection record
       const { error: connectionError } = await supabase
@@ -92,7 +110,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       // Initialize the WhatsApp instance in Evolution API
       const response = await initializeWhatsAppInstance(connectionId)
       
-      if (!response.success) {
+      if (!response.success && !response.partialSuccess) {
         // Clean up the record if the API call fails
         await supabase
           .from('agent_connections')
@@ -103,90 +121,160 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       }
       
       toast.success("Instância criada com sucesso")
-      onOpenChange(false)
-      onSuccess()
       
-      // Redirect to QR code page if necessary
-      if (response.status === 'awaiting_scan' && (response.qr || response.qrcode)) {
-        window.location.href = `/whatsapp-qr?connection_id=${connectionId}`
+      // Move to QR code display step
+      if (response.status === 'awaiting_scan' || response.qr || response.qrcode) {
+        setCreationStep("qrcode")
+      } else {
+        onOpenChange(false)
+        onSuccess()
       }
       
     } catch (error: any) {
       console.error("Erro ao criar instância:", error)
       toast.error(`Erro ao criar instância: ${error.message}`)
+      setCreationStep("form")
     } finally {
       setIsCreatingInstance(false)
     }
   }
 
+  // Check status periodically when showing QR code
+  if (creationStep === "qrcode" && connectionId) {
+    const intervalId = setInterval(async () => {
+      const isConnected = await checkStatus()
+      if (isConnected) {
+        clearInterval(intervalId)
+        toast.success("WhatsApp conectado com sucesso!")
+        setTimeout(() => {
+          onOpenChange(false)
+          onSuccess()
+        }, 1500)
+      }
+    }, 5000)
+    
+    // Clear interval when component unmounts
+    return () => clearInterval(intervalId)
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Only allow closing if we're in form step or if instance is connected
+      if (!open && (creationStep === "form" || status === "connected")) {
+        onOpenChange(false)
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Criar Nova Instância</DialogTitle>
-          <DialogDescription>
-            Forneça um nome para sua nova instância do WhatsApp
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="instance-name">Nome da Instância</Label>
-            <Input 
-              id="instance-name" 
-              placeholder="Ex: Suporte, Vendas, etc."
-              value={instanceName}
-              onChange={(e) => setInstanceName(e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="agent-selection">Associar a um Agente</Label>
-            <Select 
-              value={selectedAgentId} 
-              onValueChange={(value) => setSelectedAgentId(value)}
-            >
-              <SelectTrigger id="agent-selection">
-                <SelectValue placeholder="Selecione uma opção" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">
-                  Usar agente padrão ou criar automaticamente
-                </SelectItem>
-                <SelectItem value="none">
-                  Sem agente (configurar depois)
-                </SelectItem>
-                {agents.map(agent => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {selectedAgentId === "auto" 
-                ? "Um agente será associado automaticamente ou criado se necessário"
-                : selectedAgentId === "none" 
-                  ? "Você poderá associar a um agente posteriormente"
-                  : "A instância será conectada ao agente selecionado"}
+        {creationStep === "form" && (
+          <>
+            <DialogHeader>
+              <DialogTitle>Criar Nova Instância</DialogTitle>
+              <DialogDescription>
+                Forneça um nome para sua nova instância do WhatsApp
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="instance-name">Nome da Instância</Label>
+                <Input 
+                  id="instance-name" 
+                  placeholder="Ex: Suporte, Vendas, etc."
+                  value={instanceName}
+                  onChange={(e) => setInstanceName(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="agent-selection">Associar a um Agente</Label>
+                <Select 
+                  value={selectedAgentId} 
+                  onValueChange={(value) => setSelectedAgentId(value)}
+                >
+                  <SelectTrigger id="agent-selection">
+                    <SelectValue placeholder="Selecione uma opção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      Usar agente padrão ou criar automaticamente
+                    </SelectItem>
+                    <SelectItem value="none">
+                      Sem agente (configurar depois)
+                    </SelectItem>
+                    {agents.map(agent => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {selectedAgentId === "auto" 
+                    ? "Um agente será associado automaticamente ou criado se necessário"
+                    : selectedAgentId === "none" 
+                      ? "Você poderá associar a um agente posteriormente"
+                      : "A instância será conectada ao agente selecionado"}
+                </p>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button 
+                onClick={handleCreateInstance}
+                disabled={isCreatingInstance}
+              >
+                {isCreatingInstance ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Criando...
+                  </>
+                ) : "Criar Instância"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {creationStep === "connecting" && (
+          <div className="py-6 text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">Criando instância...</h2>
+            <p className="text-muted-foreground mb-6">
+              Aguarde enquanto configuramos sua instância do WhatsApp
             </p>
           </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleCreateInstance}
-            disabled={isCreatingInstance}
-          >
-            {isCreatingInstance ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Criando...
-              </>
-            ) : "Criar Instância"}
-          </Button>
-        </DialogFooter>
+        )}
+
+        {creationStep === "qrcode" && (
+          <div className="py-2 text-center">
+            <ConnectionStatus 
+              status={status} 
+              attempts={attempts} 
+              errorMessage={errorMessage}
+            />
+            
+            {status === "awaiting_scan" && qrCode && (
+              <QRCodeDisplay qrCode={qrCode} />
+            )}
+            
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Atualizando...
+                  </>
+                ) : "Atualizar QR Code"}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
