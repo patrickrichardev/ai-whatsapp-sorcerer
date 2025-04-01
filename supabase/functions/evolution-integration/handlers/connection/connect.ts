@@ -78,31 +78,33 @@ export async function handleConnect(
 
       console.log("Instance creation response:", createInstanceData);
 
-      // Add debug logs for connect URL
-      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-      console.log('[DEBUG] endpoint:', `instance/connect/${instanceName}`);
-      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connect/${instanceName}`);
+      // CORREÇÃO: Após a criação da instância, vamos obter o QR code diretamente
+      // ao invés de tentar usar o endpoint connect que está dando 404
+      console.log(`Getting QR code for instance: ${instanceName}`);
       
-      // Conectar instância - Endpoint correto sem "manager/"
-      console.log(`Connecting to instance: ${instanceName}`);
-      const connectionData = await callEvolutionAPI(
+      const qrResponse = await callEvolutionAPI(
         evolutionApiUrl,
-        `instance/connect/${instanceName}`,
+        `instance/qrcode/${instanceName}`,
         evolutionApiKey,
-        'POST'
+        'GET'
       );
-
-      console.log("Connection response:", connectionData);
       
-      if (connectionData.qrcode) {
-        // Remove o prefixo "data:image/png;base64," do QR code
-        const qr = connectionData.qrcode.split(',')[1] || connectionData.qrcode;
+      console.log("QR code response:", qrResponse);
+      
+      if (qrResponse && qrResponse.qrcode) {
+        // Remove o prefixo "data:image/png;base64," do QR code se necessário
+        const qr = qrResponse.qrcode.split(',')[1] || qrResponse.qrcode;
 
+        // Atualizar o banco de dados com os dados da conexão
         await supabaseClient
           .from('agent_connections')
           .update({
             is_active: false,
-            connection_data: { status: 'awaiting_scan', qr, name: connectionData.instance?.instanceName || 'WhatsApp Instance' }
+            connection_data: { 
+              status: 'awaiting_scan', 
+              qr, 
+              name: createInstanceData.instance?.instanceName || 'WhatsApp Instance' 
+            }
           })
           .eq('id', connection_id);
 
@@ -113,9 +115,36 @@ export async function handleConnect(
         });
       }
 
+      // Caso não tenha obtido o QR code, verificar o status da conexão
+      const statusResponse = await callEvolutionAPI(
+        evolutionApiUrl,
+        `instance/connectionState/${instanceName}`,
+        evolutionApiKey,
+        'GET'
+      );
+      
+      console.log("Connection status response:", statusResponse);
+      
+      if (statusResponse && statusResponse.state === 'open') {
+        // Se já estiver conectado, atualizar o status no banco de dados
+        await supabaseClient
+          .from('agent_connections')
+          .update({
+            is_active: true,
+            connection_data: { status: 'connected', name: createInstanceData.instance?.instanceName || 'WhatsApp Instance' }
+          })
+          .eq('id', connection_id);
+          
+        return createResponse({ 
+          success: true,
+          status: 'connected' 
+        });
+      }
+
       return createResponse({ 
         success: true,
-        status: connectionData.state || 'unknown' 
+        status: statusResponse?.state || 'unknown',
+        details: "Não foi possível obter o QR code ou status de conexão"
       });
     } catch (error) {
       console.error('Erro ao conectar:', error);
