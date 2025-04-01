@@ -51,11 +51,6 @@ export async function handleConnect(
       console.log(`Evolution API URL: ${evolutionApiUrl}`);
       console.log(`Using API Key: ***${evolutionApiKey ? evolutionApiKey.slice(-4) : ''}`);
       
-      // Adicionar logs de depuração para a construção da URL
-      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-      console.log('[DEBUG] endpoint:', 'instance/create');
-      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/create`);
-      
       // Criar instância com a configuração simplificada
       const createInstanceData = await callEvolutionAPI(
         evolutionApiUrl,
@@ -75,28 +70,23 @@ export async function handleConnect(
       // Se a instância foi criada com sucesso, tentamos conectar
       if (createInstanceData && !createInstanceData.error) {
         try {
-          // Adicionar logs de depuração para a URL de conexão
-          console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-          console.log('[DEBUG] endpoint:', `instance/connect/${instanceName}`);
-          console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connect/${instanceName}`);
-          
           // Adicionar uma pausa pequena para garantir que a instância esteja registrada
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Conectar à instância
+          // Conectar à instância - utilizando o formato correto conforme o payload fornecido
           console.log(`Connecting to instance: ${instanceName}`);
-          const connectionData = await callEvolutionAPI(
+          const connect = await callEvolutionAPI(
             evolutionApiUrl,
             `instance/connect/${instanceName}`,
             evolutionApiKey,
             'POST'
           );
 
-          console.log("Connection response:", connectionData);
+          console.log("Connection response:", connect);
           
-          if (connectionData.qrcode) {
+          if (connect.qrcode) {
             // Remove o prefixo "data:image/png;base64," do QR code se existir
-            const qr = connectionData.qrcode.split(',')[1] || connectionData.qrcode;
+            const qr = connect.qrcode.split(',')[1] || connect.qrcode;
 
             await supabaseClient
               .from('agent_connections')
@@ -105,7 +95,7 @@ export async function handleConnect(
                 connection_data: { 
                   status: 'awaiting_scan', 
                   qr, 
-                  name: connectionData.instance?.instanceName || instanceName
+                  name: connect.instance?.instanceName || instanceName
                 }
               })
               .eq('id', connection_id);

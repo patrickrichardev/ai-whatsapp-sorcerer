@@ -13,12 +13,7 @@ export async function handleStatus(
     
     console.log(`Checking status for instance: ${instanceName}`);
     
-    // Add debug logs for status URL
-    console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-    console.log('[DEBUG] endpoint:', `instance/connectionState/${instanceName}`);
-    console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connectionState/${instanceName}`);
-    
-    // Endpoint correto sem "manager/"
+    // Tentar obter estado da conexão
     let statusData;
     try {
       statusData = await callEvolutionAPI(
@@ -53,12 +48,6 @@ export async function handleStatus(
     console.log(`Getting QR code for instance: ${instanceName}`);
     
     try {
-      // Add debug logs for QR code URL
-      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
-      console.log('[DEBUG] endpoint:', `instance/qrcode/${instanceName}`);
-      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/qrcode/${instanceName}`);
-      
-      // Endpoint correto sem "manager/"
       const qrData = await callEvolutionAPI(
         evolutionApiUrl,
         `instance/qrcode/${instanceName}`,
