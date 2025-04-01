@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { 
   initializeWhatsAppInstance, 
@@ -19,9 +19,11 @@ export function useWhatsAppConnection(connectionId: string | null) {
   const [detailedErrors, setDetailedErrors] = useState<string[]>([]);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null);
-  const [checkInterval, setCheckInterval] = useState<number | null>(null);
+  const [checkIntervalId, setCheckIntervalId] = useState<number | null>(null);
+  const [consecutiveFailures, setConsecutiveFailures] = useState(0);
 
-  const testConnection = async () => {
+  // Função para testar a conexão com a Evolution API
+  const testConnection = useCallback(async () => {
     try {
       setStatus("testing_connection");
       setConnectionOk(null);
@@ -58,9 +60,10 @@ export function useWhatsAppConnection(connectionId: string | null) {
       toast.error("Erro ao testar conexão");
       return false;
     }
-  };
+  }, []);
 
-  const initializeConnection = async () => {
+  // Função para inicializar a conexão
+  const initializeConnection = useCallback(async () => {
     if (!connectionId) {
       toast.error("ID da conexão não fornecido");
       return;
@@ -76,6 +79,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
       setErrorMessage(null);
       setDetailedErrors([]);
       setApiResponse(null);
+      setIsRefreshing(true);
       console.log("Iniciando conexão para ID:", connectionId);
       
       const response = await initializeWhatsAppInstance(connectionId);
@@ -109,10 +113,8 @@ export function useWhatsAppConnection(connectionId: string | null) {
       } else if (response.status === "connected") {
         setStatus("connected");
       } else {
-        console.error("Resposta inesperada:", response);
-        setStatus("error");
-        setErrorMessage("Resposta inesperada do servidor");
-        toast.error("Erro ao gerar QR code");
+        console.log("Resposta recebida sem QR code ou status connected:", response);
+        startStatusCheck(); // Tentar verificar status mesmo assim
       }
     } catch (error: any) {
       console.error("Erro ao iniciar conexão:", error);
@@ -120,17 +122,21 @@ export function useWhatsAppConnection(connectionId: string | null) {
       setErrorMessage(error.message || "Erro desconhecido");
       setDetailedErrors([`Detalhes técnicos: ${JSON.stringify(error)}`]);
       toast.error("Erro ao iniciar conexão");
+    } finally {
+      setIsRefreshing(false);
     }
-  };
+  }, [connectionId, connectionOk, testConnection]);
 
-  const checkStatus = async () => {
-    if (!connectionId || status === "connected" || status === "testing_connection") return false;
+  // Função para verificar o status da conexão
+  const checkStatus = useCallback(async () => {
+    if (!connectionId || status === "testing_connection") return false;
 
     try {
       const response = await checkWhatsAppStatus(connectionId);
       console.log("Status check response:", response);
 
       setApiResponse(response);
+      setConsecutiveFailures(0); // Resetar contador de falhas consecutivas
 
       if (!response.success) {
         throw new Error(response.error || "Erro ao verificar status");
@@ -141,10 +147,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
         toast.success("WhatsApp conectado com sucesso!");
         
         // Stop checking once connected
-        if (checkInterval) {
-          clearInterval(checkInterval);
-          setCheckInterval(null);
-        }
+        stopStatusCheck();
         
         return true;
       } else if ((response.qr || response.qrcode) && (response.qr || response.qrcode) !== qrCode) {
@@ -156,38 +159,59 @@ export function useWhatsAppConnection(connectionId: string | null) {
       return false;
     } catch (error: any) {
       console.error("Erro ao verificar status:", error);
+      setConsecutiveFailures(prev => prev + 1);
+      
+      // Se houverem muitas falhas consecutivas, tentar reiniciar
+      if (consecutiveFailures >= 3) {
+        console.log("Muitas falhas consecutivas. Tentando reiniciar a conexão...");
+        stopStatusCheck();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // pequeno delay
+        initializeConnection();
+      }
+      
       return false;
     }
-  };
+  }, [connectionId, status, qrCode, consecutiveFailures, initializeConnection]);
 
-  const startStatusCheck = () => {
+  // Função para iniciar a verificação periódica do status
+  const startStatusCheck = useCallback(() => {
     // Clear any existing interval
-    if (checkInterval) {
-      clearInterval(checkInterval);
-    }
+    stopStatusCheck();
     
     // Check status immediately
     checkStatus();
     
-    // Then set up interval - FIX: Correctly store the interval ID
-    const interval = window.setInterval(() => {
+    // Then set up interval
+    const intervalId = window.setInterval(() => {
       checkStatus();
     }, 5000); // Check every 5 seconds
     
     // Update state with the interval ID
-    setCheckInterval(interval as unknown as number);
-  };
+    setCheckIntervalId(intervalId);
+  }, [checkStatus]);
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    if (status === "error" && (connectionOk === null || connectionOk === false)) {
-      await testConnection();
+  // Função para parar a verificação periódica do status
+  const stopStatusCheck = useCallback(() => {
+    if (checkIntervalId) {
+      window.clearInterval(checkIntervalId);
+      setCheckIntervalId(null);
     }
-    await initializeConnection();
-    setIsRefreshing(false);
-  };
+  }, [checkIntervalId]);
 
-  // Initialize connection on mount
+  // Função para atualizar a conexão
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      if (status === "error" && (connectionOk === null || connectionOk === false)) {
+        await testConnection();
+      }
+      await initializeConnection();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [status, connectionOk, testConnection, initializeConnection]);
+
+  // Inicializar conexão no mount
   useEffect(() => {
     if (connectionId) {
       initializeConnection();
@@ -195,11 +219,9 @@ export function useWhatsAppConnection(connectionId: string | null) {
     
     return () => {
       // Clear any interval on unmount
-      if (checkInterval) {
-        clearInterval(checkInterval);
-      }
+      stopStatusCheck();
     };
-  }, [connectionId]);
+  }, [connectionId, initializeConnection, stopStatusCheck]);
 
   return {
     qrCode,

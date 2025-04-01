@@ -1,3 +1,8 @@
+
+import { Card } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import QRCode from "react-qr-code";
 import { useEffect, useState } from "react";
 
 interface QRCodeDisplayProps {
@@ -5,37 +10,69 @@ interface QRCodeDisplayProps {
 }
 
 export function QRCodeDisplay({ qrCode }: QRCodeDisplayProps) {
-  const [qrSrc, setQrSrc] = useState<string | null>(null);
-  
+  const [qrValue, setQrValue] = useState<string | null>(null);
+  const [isBase64Image, setIsBase64Image] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (qrCode) {
-      // Check if qrCode already has the data URL prefix
+    if (!qrCode) {
+      setError("QR Code não disponível");
+      return;
+    }
+
+    setError(null);
+
+    try {
+      // Verifica se o QR code é uma imagem em base64 ou um texto
       if (qrCode.startsWith("data:image")) {
-        setQrSrc(qrCode);
+        // É uma imagem completa com prefixo
+        setIsBase64Image(true);
+        setQrValue(qrCode);
+      } else if (/^[A-Za-z0-9+/=]+$/.test(qrCode) && qrCode.length > 100) {
+        // Parece ser base64 sem o prefixo
+        setIsBase64Image(true);
+        setQrValue(`data:image/png;base64,${qrCode}`);
       } else {
-        // Otherwise, assume it's a base64 string and add the prefix
-        setQrSrc(`data:image/png;base64,${qrCode}`);
+        // É um valor de texto para gerar QR Code
+        setIsBase64Image(false);
+        setQrValue(qrCode);
       }
-    } else {
-      setQrSrc(null);
+    } catch (e) {
+      console.error("Erro ao processar QR code:", e);
+      setError("Erro ao processar o QR code. Tente atualizar.");
     }
   }, [qrCode]);
 
-  if (!qrSrc) return null;
-  
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="aspect-square max-w-[300px] mx-auto mb-6 bg-white p-4 rounded-lg shadow-md">
-      <img
-        src={qrSrc}
-        alt="WhatsApp QR Code"
-        className="w-full h-full"
-        onError={(e) => {
-          console.error("Error loading QR code image");
-          const target = e.target as HTMLImageElement;
-          target.onerror = null; // Prevent infinite error loop
-          target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMyAyMiAyMiAxNy41MjMgMjIgMTJDMjIgNi40NzcxNyAxNy41MjMgMiAxMiAyQzYuNDc3MTcgMiAyIDYuNDc3MTcgMiAxMkMyIDE3LjUyMyA2LjQ3NzE3IDIyIDEyIDIyWiIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIvPgo8cGF0aCBkPSJNMTIgOFYxNiIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik04IDEySDE2IiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+Cg==";
-        }}
-      />
-    </div>
+    <Card className="p-6 mx-auto flex justify-center items-center mb-6 max-w-xs">
+      {isBase64Image ? (
+        <img 
+          src={qrValue || ''} 
+          alt="Escaneie este QR Code com o WhatsApp" 
+          className="max-w-full h-auto"
+          onError={() => {
+            setError("Erro ao carregar a imagem do QR code. Tente atualizar.");
+            console.error("Failed to load QR code image:", qrValue);
+          }}
+        />
+      ) : (
+        qrValue && (
+          <QRCode
+            size={200}
+            value={qrValue}
+            viewBox={`0 0 200 200`}
+          />
+        )
+      )}
+    </Card>
   );
 }
