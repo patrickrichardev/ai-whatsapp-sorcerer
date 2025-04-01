@@ -2,252 +2,204 @@
 import { supabase } from "@/lib/supabase";
 import { EvolutionAPIResponse } from "./types";
 
-export async function initializeWhatsAppInstance(connectionId: string): Promise<EvolutionAPIResponse> {
+/**
+ * Initialize a WhatsApp instance by connection ID
+ * @param connectionId The connection ID to initialize
+ * @returns Promise with the API response
+ */
+export const initializeWhatsAppInstance = async (
+  connectionId: string
+): Promise<EvolutionAPIResponse> => {
   try {
-    console.log("Initializing WhatsApp instance for connection:", connectionId);
+    console.log(`Initializing WhatsApp instance for connection ID: ${connectionId}`);
     
-    // Usar timeout mais longo para evitar problemas com operações demoradas
+    // Create an AbortController with a timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 segundos
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
-    try {
-      const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
-        body: { 
-          action: "connect", 
-          agent_id: connectionId 
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (error) {
-        console.error("Supabase function error:", error);
-        return {
-          success: false,
-          error: `Erro na função do Supabase: ${error.message}`,
-          details: JSON.stringify(error)
-        };
-      }
-      
-      console.log("Response from Evolution API:", data);
-      
-      if (!data) {
-        return {
-          success: false,
-          error: "Resposta vazia da API",
-          details: "A função retornou uma resposta vazia"
-        };
-      }
-      
-      // If data contains an error, pass it along
-      if (data.error) {
-        return {
-          success: false,
-          error: data.error,
-          details: data.details || "Sem detalhes adicionais"
-        };
-      }
-      
+    const { data, error } = await supabase.functions.invoke("evolution-integration", {
+      body: {
+        action: "connect",
+        connection_id: connectionId,
+      },
+      // Don't include signal property in FunctionInvokeOptions
+      // signal: controller.signal, // This caused the error
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (error) {
+      console.error("Error initializing WhatsApp instance:", error);
       return {
-        success: true,
-        ...data
+        success: false,
+        error: error.message,
+        details: "Error during Evolution API function invocation",
       };
-    } catch (abortError: any) {
-      clearTimeout(timeoutId);
-      if (abortError.name === 'AbortError') {
-        console.error("Request timed out after 60 seconds");
-        return {
-          success: false,
-          error: "A solicitação excedeu o tempo limite de 60 segundos",
-          details: "Tente novamente ou verifique se o servidor Evolution API está sobrecarregado"
-        };
-      }
-      throw abortError;
     }
-  } catch (error: any) {
-    console.error("Evolution API Error:", error);
+    
+    console.log("WhatsApp instance initialization response:", data);
+    return data;
+  } catch (err: any) {
+    console.error("Exception initializing WhatsApp instance:", err);
     return {
       success: false,
-      error: error.message || "Erro ao conectar com a Evolution API",
-      details: error.stack || JSON.stringify(error)
+      error: err.message || "Unknown error",
+      details: "Exception during initialization request",
     };
   }
-}
+};
 
-export async function checkWhatsAppStatus(connectionId: string): Promise<EvolutionAPIResponse> {
+/**
+ * Check the status of a WhatsApp instance by connection ID
+ * @param connectionId The connection ID to check
+ * @returns Promise with the API response
+ */
+export const checkWhatsAppStatus = async (
+  connectionId: string
+): Promise<EvolutionAPIResponse> => {
   try {
-    console.log("Checking WhatsApp status for connection:", connectionId);
+    console.log(`Checking WhatsApp status for connection ID: ${connectionId}`);
     
-    // Usar timeout mais curto para verificações de status
+    // Create an AbortController with a timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
-    try {
-      const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
-        body: { 
-          action: "status", 
-          agent_id: connectionId 
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (error) {
-        console.error("Supabase function error:", error);
-        return {
-          success: false,
-          error: `Erro na função do Supabase: ${error.message}`,
-          details: JSON.stringify(error)
-        };
-      }
-      
-      console.log("Status response from Evolution API:", data);
-      
-      if (!data) {
-        return {
-          success: false,
-          error: "Resposta vazia da API",
-          details: "A função retornou uma resposta vazia"
-        };
-      }
-      
+    const { data, error } = await supabase.functions.invoke("evolution-integration", {
+      body: {
+        action: "status",
+        connection_id: connectionId,
+      },
+      // Don't include signal property in FunctionInvokeOptions
+      // signal: controller.signal, // This caused the error
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (error) {
+      console.error("Error checking WhatsApp status:", error);
       return {
-        success: true,
-        ...data
+        success: false,
+        error: error.message,
+        details: "Error during Evolution API function invocation",
       };
-    } catch (abortError: any) {
-      clearTimeout(timeoutId);
-      if (abortError.name === 'AbortError') {
-        console.error("Status check timed out after 30 seconds");
-        return {
-          success: false,
-          error: "A verificação de status excedeu o tempo limite de 30 segundos",
-          details: "Tente novamente ou verifique se o servidor Evolution API está sobrecarregado"
-        };
-      }
-      throw abortError;
     }
-  } catch (error: any) {
-    console.error("Evolution API Error:", error);
+    
+    console.log("WhatsApp status check response:", data);
+    return data;
+  } catch (err: any) {
+    console.error("Exception checking WhatsApp status:", err);
     return {
       success: false,
-      error: error.message || "Erro ao verificar status da conexão",
-      details: error.stack || JSON.stringify(error)
+      error: err.message || "Unknown error",
+      details: "Exception during status check request",
     };
   }
-}
+};
 
-export async function disconnectWhatsAppInstance(connectionId: string): Promise<EvolutionAPIResponse> {
+/**
+ * Test the connection to the Evolution API
+ * @returns Promise with the API response
+ */
+export const testEvolutionAPIConnection = async (): Promise<EvolutionAPIResponse> => {
   try {
-    console.log("Disconnecting WhatsApp instance for connection:", connectionId);
+    console.log("Testing connection to Evolution API");
     
-    const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
-      body: { 
-        action: "disconnect", 
-        agent_id: connectionId 
-      }
+    const { data, error } = await supabase.functions.invoke("evolution-integration", {
+      body: {
+        action: "test",
+      },
     });
     
     if (error) {
-      console.error("Supabase function error:", error);
+      console.error("Error testing Evolution API connection:", error);
       return {
         success: false,
-        error: `Erro na função do Supabase: ${error.message}`,
-        details: JSON.stringify(error)
+        error: error.message,
+        details: "Error during Evolution API function invocation",
       };
     }
     
-    console.log("Disconnect response:", data);
+    console.log("Evolution API connection test response:", data);
+    return data;
+  } catch (firstError: any) {
+    console.error("Exception testing Evolution API connection:", firstError);
     
-    return {
-      success: true,
-      ...data
-    };
-  } catch (error: any) {
-    console.error("Evolution API Error:", error);
-    return {
-      success: false,
-      error: error.message || "Erro ao desconectar instância",
-      details: error.stack || JSON.stringify(error)
-    };
-  }
-}
-
-// Renamed to avoid conflict but still exported for backward compatibility
-export async function testEvolutionAPIConnection(): Promise<EvolutionAPIResponse> {
-  try {
-    console.log("Testing Evolution API connection");
-    
-    // Tentar obter informações básicas do servidor como teste
+    // Try to get more diagnostic information
     try {
-      const { data, error } = await supabase.functions.invoke("evolution-integration", {
-        body: { 
-          action: "test_connection"
-        }
+      // This test call will return details about where the configuration is failing
+      const { data, error: testError } = await supabase.functions.invoke("evolution-integration", {
+        body: {
+          action: "credentials_test",
+        },
       });
       
-      if (error) {
-        console.error("Supabase function error:", error);
+      if (testError) {
         return {
           success: false,
-          error: `Erro na função do Supabase: ${error.message}`,
-          details: JSON.stringify(error)
-        };
-      }
-      
-      console.log("Test connection response:", data);
-      
-      if (!data) {
-        return {
-          success: false,
-          error: "Resposta vazia da API",
-          details: "A função retornou uma resposta vazia"
-        };
-      }
-      
-      if (data.error) {
-        return {
-          success: false,
-          error: data.error,
-          details: data.details || "Sem detalhes adicionais"
+          error: firstError.message || "Unknown error",
+          details: "Exception during connection test",
+          diagnostics: { 
+            message: testError.message,
+            secondaryError: true
+          }
         };
       }
       
       return {
-        success: true,
-        ...data
+        success: false,
+        error: firstError.message || "Unknown error",
+        details: "Exception during connection test",
+        diagnostics: data
       };
-    } catch (error) {
-      // Se falhar, tentar no endpoint whatsapp-connection como fallback
-      console.log("Evolution-integration failed, trying whatsapp-connection directly...");
-      
-      // Tentar uma verificação simples pelo endpoint de fallback
-      const { data, error } = await supabase.functions.invoke("whatsapp-connection", {
-        body: { 
-          action: "test",
-          agent_id: "test"
-        }
-      });
-      
-      // Se houver erro na chamada, não significa que o servidor não está funcionando,
-      // apenas que o endpoint específico falhou
-      if (data && !data.error) {
-        return {
-          success: true,
-          message: "Conexão com Evolution API estabelecida com sucesso"
-        };
-      }
-      
-      throw new Error("Não foi possível estabelecer conexão com o servidor Evolution API");
+    } catch (secondError: any) {
+      // We'll just return the first error if we can't get diagnostics
+      return {
+        success: false,
+        error: firstError.message || "Unknown error",
+        details: "Exception during connection test, diagnostics also failed",
+      };
     }
-  } catch (error: any) {
-    console.error("Evolution API Connection Test Error:", error);
+  }
+};
+
+/**
+ * Create a new Evolution API instance with configuration
+ * @param instanceName Name for the new instance
+ * @param config Configuration object for the instance
+ * @returns Promise with the API response
+ */
+export const createEvolutionInstance = async (
+  instanceName: string,
+  config: any
+): Promise<EvolutionAPIResponse> => {
+  try {
+    console.log(`Creating Evolution API instance ${instanceName} with config:`, config);
+    
+    const { data, error } = await supabase.functions.invoke("evolution-integration", {
+      body: {
+        action: "create_instance",
+        instanceName,
+        config
+      },
+    });
+    
+    if (error) {
+      console.error("Error creating Evolution API instance:", error);
+      return {
+        success: false,
+        error: error.message,
+        details: "Error during Evolution API function invocation",
+      };
+    }
+    
+    console.log("Evolution API instance creation response:", data);
+    return data;
+  } catch (err: any) {
+    console.error("Exception creating Evolution API instance:", err);
     return {
       success: false,
-      error: error.message || "Erro ao testar conexão com a Evolution API",
-      details: error.stack || JSON.stringify(error)
+      error: err.message || "Unknown error",
+      details: "Exception during instance creation request",
     };
   }
-}
+};
