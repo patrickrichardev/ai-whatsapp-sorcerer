@@ -43,6 +43,7 @@ export async function handleConnect(
     }
     
     const instanceName = `conn_${connection_id}`;
+    const connData = connection.connection_data || {};
     
     try {
       const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
@@ -72,6 +73,7 @@ export async function handleConnect(
             .update({
               is_active: true,
               connection_data: { 
+                ...connData,
                 status: 'connected', 
                 name: instanceName || 'WhatsApp Instance' 
               }
@@ -92,39 +94,56 @@ export async function handleConnect(
       if (!instanceExists) {
         // Criar instância com a configuração completa
         console.log("Creating new Evolution API instance...");
+        
+        // Prepare webhook events based on configuration
+        const webhookEvents = connData.webhookByEvents ? [
+          "MESSAGES_UPSERT",
+          "MESSAGES_UPDATE", 
+          "CONNECTION_UPDATE"
+        ] : [];
+        
+        // Construct the complete instance creation payload
+        const createInstancePayload = {
+          instanceName,                     // nome da instância, tipo: conn_abc123
+          token: connection_id,             // identificador único, pode usar o próprio connection_id
+          qrcode: true,                     // vai gerar o QR Code para parear com o WhatsApp
+          integration: 'WHATSAPP-BAILEYS',  // ESSENCIAL: define o tipo de integração
+          number: connData.phone || '',     // Número de telefone se fornecido
+          
+          // Configurações de chamadas
+          reject_call: connData.rejectCalls !== undefined ? connData.rejectCalls : true,
+          msgCall: connData.rejectCallMessage || "Não posso atender no momento, mas deixe sua mensagem.",
+          
+          // Configurações gerais
+          groupsIgnore: connData.ignoreGroups !== undefined ? connData.ignoreGroups : true,
+          alwaysOnline: connData.alwaysOnline !== undefined ? connData.alwaysOnline : true,
+          readMessages: connData.readMessages !== undefined ? connData.readMessages : true,
+          readStatus: connData.readStatus !== undefined ? connData.readStatus : true,
+          syncFullHistory: connData.syncFullHistory !== undefined ? connData.syncFullHistory : true,
+          
+          // Configurações de webhook
+          webhookUrl: connData.webhookUrl || '',
+          webhookByEvents: connData.webhookByEvents !== undefined ? connData.webhookByEvents : false,
+          webhookBase64: connData.webhookBase64 !== undefined ? connData.webhookBase64 : false,
+          webhookEvents: webhookEvents
+        };
+        
+        // Log the payload for debugging
+        console.log("Instance creation payload:", JSON.stringify(createInstancePayload, null, 2));
+        
         const createInstanceData = await callEvolutionAPI(
           evolutionApiUrl,
           'instance/create',
           evolutionApiKey,
           'POST',
-          {
-            instanceName,                  // nome da instância, tipo: conn_abc123
-            token: connection_id,         // identificador único, pode usar o próprio connection_id
-            qrcode: true,                 // vai gerar o QR Code para parear com o WhatsApp
-            integration: 'WHATSAPP-BAILEYS', // ESSENCIAL: define o tipo de integração
-            number: connection.connection_data?.phone || '', // Número de telefone se fornecido
-            reject_call: true,
-            msgCall: "Não posso atender no momento, mas deixe sua mensagem.",
-            groupsIgnore: true,
-            alwaysOnline: true,
-            readMessages: true,
-            readStatus: true,
-            syncFullHistory: true,
-            webhookUrl: connection.connection_data?.webhookUrl || '',
-            webhookByEvents: true,
-            webhookEvents: [
-              "MESSAGES_UPSERT",
-              "MESSAGES_UPDATE", 
-              "CONNECTION_UPDATE"
-            ]
-          }
+          createInstancePayload
         );
 
         console.log("Instance creation response:", createInstanceData);
         
         // Delay to allow the instance to initialize properly
         console.log("Waiting for instance initialization...");
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
 
       // Even if the instance exists, try to connect it explicitly
@@ -137,7 +156,7 @@ export async function handleConnect(
           'POST'
         );
         // Wait for connection to initialize
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
       } catch (error) {
         console.warn(`Warning: Explicit connect call failed: ${error.message}`);
         // Continue anyway, as the instance might already be connected
@@ -171,6 +190,7 @@ export async function handleConnect(
           .update({
             is_active: false,
             connection_data: { 
+              ...connData,
               status: 'awaiting_scan', 
               qr, 
               name: instanceName || 'WhatsApp Instance' 
@@ -209,6 +229,7 @@ export async function handleConnect(
           .update({
             is_active: true,
             connection_data: { 
+              ...connData,
               status: 'connected', 
               name: instanceName || 'WhatsApp Instance' 
             }
@@ -225,7 +246,7 @@ export async function handleConnect(
       console.log("Making one final attempt to get QR code...");
       try {
         // Esperar mais um pouco
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         qrResponse = await callEvolutionAPI(
           evolutionApiUrl,
@@ -242,6 +263,7 @@ export async function handleConnect(
             .update({
               is_active: false,
               connection_data: { 
+                ...connData,
                 status: 'awaiting_scan', 
                 qr, 
                 name: instanceName || 'WhatsApp Instance' 

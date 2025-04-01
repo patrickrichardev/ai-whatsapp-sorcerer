@@ -33,23 +33,69 @@ serve(async (req) => {
     switch (action) {
       case 'connect': {
         try {
-          // Criar instância se não existir
+          // Buscar configurações da conexão
+          const { data: connection, error: connectionError } = await supabaseClient
+            .from('agent_connections')
+            .select('connection_data')
+            .eq('id', agent_id)
+            .single();
+            
+          if (connectionError) {
+            throw new Error(`Erro ao obter configurações: ${connectionError.message}`);
+          }
+          
+          const connData = connection?.connection_data || {};
+          
+          // Prepare webhook events based on configuration
+          const webhookEvents = connData.webhookByEvents ? [
+            "MESSAGES_UPSERT",
+            "MESSAGES_UPDATE", 
+            "CONNECTION_UPDATE"
+          ] : [];
+          
+          // Criar instância com configurações completas
+          const createInstancePayload = {
+            instanceName,
+            token: agent_id,
+            qrcode: true,
+            integration: 'WHATSAPP-BAILEYS',
+            number: connData.phone || phone || '',
+            
+            // Configurações de chamadas
+            reject_call: connData.rejectCalls !== undefined ? connData.rejectCalls : true,
+            msgCall: connData.rejectCallMessage || "Não posso atender no momento, mas deixe sua mensagem.",
+            
+            // Configurações gerais
+            groupsIgnore: connData.ignoreGroups !== undefined ? connData.ignoreGroups : true,
+            alwaysOnline: connData.alwaysOnline !== undefined ? connData.alwaysOnline : true,
+            readMessages: connData.readMessages !== undefined ? connData.readMessages : true,
+            readStatus: connData.readStatus !== undefined ? connData.readStatus : true,
+            syncFullHistory: connData.syncFullHistory !== undefined ? connData.syncFullHistory : true,
+            
+            // Configurações de webhook
+            webhookUrl: connData.webhookUrl || '',
+            webhookByEvents: connData.webhookByEvents !== undefined ? connData.webhookByEvents : false,
+            webhookBase64: connData.webhookBase64 !== undefined ? connData.webhookBase64 : false,
+            webhookEvents: webhookEvents
+          };
+          
+          console.log("Creating instance with config:", JSON.stringify(createInstancePayload, null, 2));
+          
           const createInstanceResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'apikey': EVOLUTION_API_KEY
             },
-            body: JSON.stringify({
-              instanceName,
-              token: agent_id,
-              qrcode: true
-            })
+            body: JSON.stringify(createInstancePayload)
           })
 
           if (!createInstanceResponse.ok) {
             throw new Error('Falha ao criar instância')
           }
+
+          // Esperar a inicialização
+          await new Promise(resolve => setTimeout(resolve, 3000));
 
           // Conectar instância
           const connectResponse = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
@@ -72,7 +118,11 @@ serve(async (req) => {
                 agent_id,
                 platform: 'whatsapp',
                 is_active: false,
-                connection_data: { status: 'awaiting_scan', qr }
+                connection_data: { 
+                  ...connData,
+                  status: 'awaiting_scan', 
+                  qr 
+                }
               })
 
             return new Response(
@@ -102,13 +152,25 @@ serve(async (req) => {
         const statusData = await statusResponse.json()
         
         if (statusData.state === 'open') {
+          // Buscar configurações da conexão
+          const { data: connection } = await supabaseClient
+            .from('agent_connections')
+            .select('connection_data')
+            .eq('id', agent_id)
+            .single();
+            
+          const connData = connection?.connection_data || {};
+          
           await supabaseClient
             .from('agent_connections')
             .upsert({
               agent_id,
               platform: 'whatsapp',
               is_active: true,
-              connection_data: { status: 'connected' }
+              connection_data: { 
+                ...connData,
+                status: 'connected' 
+              }
             })
 
           return new Response(
@@ -128,7 +190,30 @@ serve(async (req) => {
         const qrData = await qrResponse.json()
         
         if (qrData.qrcode) {
+          // Buscar configurações da conexão
+          const { data: connection } = await supabaseClient
+            .from('agent_connections')
+            .select('connection_data')
+            .eq('id', agent_id)
+            .single();
+            
+          const connData = connection?.connection_data || {};
+          
           const qr = qrData.qrcode.split(',')[1] || qrData.qrcode
+          
+          await supabaseClient
+            .from('agent_connections')
+            .upsert({
+              agent_id,
+              platform: 'whatsapp',
+              is_active: false,
+              connection_data: { 
+                ...connData,
+                status: 'awaiting_scan',
+                qr 
+              }
+            })
+            
           return new Response(
             JSON.stringify({ qr, status: 'awaiting_scan' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -193,13 +278,25 @@ serve(async (req) => {
           throw new Error('Falha ao deletar instância')
         }
 
+        // Buscar configurações da conexão
+        const { data: connection } = await supabaseClient
+          .from('agent_connections')
+          .select('connection_data')
+          .eq('id', agent_id)
+          .single();
+          
+        const connData = connection?.connection_data || {};
+
         await supabaseClient
           .from('agent_connections')
           .upsert({
             agent_id,
             platform: 'whatsapp',
             is_active: false,
-            connection_data: { status: 'disconnected' }
+            connection_data: { 
+              ...connData,
+              status: 'disconnected' 
+            }
           })
 
         return new Response(
