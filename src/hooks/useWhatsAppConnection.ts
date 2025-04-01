@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { 
   initializeWhatsAppInstance, 
@@ -21,7 +21,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null);
   const [instanceData, setInstanceData] = useState<{instanceCreated: boolean; instanceName?: string} | null>(null);
 
-  const testConnection = async () => {
+  const testConnection = useCallback(async () => {
     try {
       setStatus("testing_connection");
       setConnectionOk(null);
@@ -58,9 +58,9 @@ export function useWhatsAppConnection(connectionId: string | null) {
       toast.error("Erro ao testar conexão");
       return false;
     }
-  };
+  }, []);
 
-  const initializeConnection = async () => {
+  const initializeConnection = useCallback(async () => {
     if (!connectionId) {
       toast.error("ID da conexão não fornecido");
       return;
@@ -136,9 +136,9 @@ export function useWhatsAppConnection(connectionId: string | null) {
       setDetailedErrors([`Detalhes técnicos: ${JSON.stringify(error)}`]);
       toast.error("Erro ao iniciar conexão");
     }
-  };
+  }, [connectionId, connectionOk, testConnection]);
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     if (!connectionId || status === "connected" || status === "testing_connection") return false;
 
     try {
@@ -166,9 +166,9 @@ export function useWhatsAppConnection(connectionId: string | null) {
       console.error("Erro ao verificar status:", error);
       return false;
     }
-  };
+  }, [connectionId, status, qrCode]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     if (status === "error" && (connectionOk === null || connectionOk === false)) {
       await testConnection();
@@ -183,7 +183,25 @@ export function useWhatsAppConnection(connectionId: string | null) {
     }
     
     setIsRefreshing(false);
-  };
+  }, [status, connectionOk, instanceData, testConnection, checkStatus, initializeConnection]);
+
+  // Auto-check status every few seconds when awaiting scan
+  useEffect(() => {
+    let intervalId: number | undefined;
+    
+    if (status === "awaiting_scan" && connectionId) {
+      intervalId = window.setInterval(async () => {
+        const isConnected = await checkStatus();
+        if (isConnected) {
+          clearInterval(intervalId);
+        }
+      }, 5000);
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [status, connectionId, checkStatus]);
 
   return {
     qrCode,

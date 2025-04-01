@@ -61,43 +61,59 @@ export async function callEvolutionAPI(
   console.log(`[VERBOSE] Making API call to Evolution API:`);
   console.log(`[VERBOSE] Base URL (raw): "${baseUrl}"`);
   console.log(`[VERBOSE] Endpoint (raw): "${endpoint}"`);
+  console.log(`[VERBOSE] Method: "${method}"`);
   
   // Unified URL construction - DO NOT add "/manager" to the URL
   const url = joinUrl(baseUrl, endpoint);
   console.log(`[VERBOSE] Final URL: "${url}"`);
 
   try {
-    const response = await fetch(url, {
+    const options: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey
       },
-      body: body ? JSON.stringify(body) : undefined,
       // Use AbortController to set a timeout
       signal: AbortSignal.timeout(15000) // 15 second timeout
-    });
+    };
+
+    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      options.body = JSON.stringify(body);
+      console.log(`[VERBOSE] Request body: ${JSON.stringify(body, null, 2)}`);
+    }
+
+    const response = await fetch(url, options);
 
     // Log API response status
     console.log(`Evolution API response status: ${response.status}`);
     
-    // Handle non-OK responses
-    if (!response.ok) {
-      let errorBody: string;
-      try {
-        // Try to parse as JSON
-        const errorJson = await response.json();
-        errorBody = JSON.stringify(errorJson);
-      } catch {
-        // If not JSON, get as text
-        errorBody = await response.text();
+    let responseBody: any;
+    
+    // Try to parse the response as JSON
+    try {
+      responseBody = await response.json();
+      console.log(`[VERBOSE] Response body: ${JSON.stringify(responseBody, null, 2)}`);
+    } catch (e) {
+      // If response is not JSON, get it as text
+      const textBody = await response.text();
+      console.log(`[VERBOSE] Response body (text): ${textBody}`);
+      
+      // Re-throw with the response text
+      if (!response.ok) {
+        throw new Error(`Evolution API returned status ${response.status}: ${textBody}`);
       }
       
-      throw new Error(`Evolution API returned status ${response.status}: ${errorBody}`);
+      // Return a simple object for non-JSON responses
+      return { success: response.ok, text: textBody };
+    }
+    
+    // Handle non-2xx responses with JSON body
+    if (!response.ok) {
+      throw new Error(`Evolution API returned status ${response.status}: ${JSON.stringify(responseBody)}`);
     }
 
-    // Parse successful response
-    return await response.json();
+    return responseBody;
   } catch (error) {
     console.error(`Error calling Evolution API ${endpoint}:`, error);
     throw error;
