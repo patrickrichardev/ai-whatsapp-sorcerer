@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
+import { UserProfileBox } from "./UserProfileBox"
 
 const navigation = [
   {
@@ -74,16 +75,20 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <div className="border-t p-3 space-y-2 bg-muted/30">
-        <ThemeToggle className="w-full justify-start" />
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-base py-5 text-destructive/80 hover:text-destructive hover:bg-destructive/5"
-          onClick={signOut}
-        >
-          <LogOut className="h-5 w-5" />
-          Sair
-        </Button>
+      <div className="border-t bg-muted/30 flex flex-col">
+        <UserProfileBox />
+        
+        <div className="p-3 space-y-2">
+          <ThemeToggle className="w-full justify-start" />
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-base py-5 text-destructive/80 hover:text-destructive hover:bg-destructive/5"
+            onClick={signOut}
+          >
+            <LogOut className="h-5 w-5" />
+            Sair
+          </Button>
+        </div>
       </div>
     </div>
   )
