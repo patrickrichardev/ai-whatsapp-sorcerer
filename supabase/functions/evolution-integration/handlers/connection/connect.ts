@@ -56,30 +56,17 @@ export async function handleConnect(
       console.log('[DEBUG] endpoint:', 'instance/create');
       console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/create`);
       
-      // Criar instância com a configuração correta
+      // Criar instância com a configuração simplificada
       const createInstanceData = await callEvolutionAPI(
         evolutionApiUrl,
         'instance/create',
         evolutionApiKey,
         'POST',
         {
-          instanceName,                  // nome da instância, tipo: conn_abc123
-          token: connection_id,          // identificador único, pode usar o próprio connection_id
-          qrcode: true,                  // gerar o QR Code para parear com o WhatsApp
-          number: "",                    // número do WhatsApp principal (opcional)
-          webhook: {                     // configuração webhook (deixe vazio se não usar)
-            url: "",
-            enabled: false
-          },
-          webhook_by_events: false,     // webhooks por eventos específicos
-          events: [],                   // lista de eventos para webhooks
-          reject_call: true,            // rejeitar chamadas
-          msg_call: "Desculpe, não posso atender chamadas no momento.",
-          groups_ignore: true,          // ignorar mensagens de grupos
-          always_online: true,          // status "online" permanente
-          read_messages: true,          // marcar mensagens como lidas
-          read_status: true,            // enviar status de leitura
-          sync_full_history: true       // sincronizar histórico de mensagens
+          instanceName,
+          token: connection_id,
+          qrcode: true,
+          integration: 'WHATSAPP-BAILEYS'
         }
       );
 

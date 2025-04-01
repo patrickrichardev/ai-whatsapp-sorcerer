@@ -1,7 +1,7 @@
 
-import { Loader2, CheckCircle2, XCircle, Wifi, QrCode } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Wifi, QrCode, Clock } from "lucide-react";
 
-type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection";
+type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection" | "pending";
 
 interface ConnectionStatusProps {
   status: ConnectionStatus;
@@ -18,6 +18,7 @@ export function ConnectionStatus({ status, attempts, errorMessage }: ConnectionS
         {status === "awaiting_scan" && <QrCode className="w-8 h-8 text-primary" />}
         {status === "connected" && <CheckCircle2 className="w-8 h-8 text-green-500" />}
         {status === "error" && <XCircle className="w-8 h-8 text-destructive" />}
+        {status === "pending" && <Clock className="w-8 h-8 text-amber-500 animate-pulse" />}
       </div>
       
       <h2 className="text-2xl font-semibold mb-2">
@@ -26,6 +27,7 @@ export function ConnectionStatus({ status, attempts, errorMessage }: ConnectionS
         {status === "awaiting_scan" && "Escaneie o QR Code"}
         {status === "connected" && "WhatsApp Conectado!"}
         {status === "error" && "Erro ao conectar"}
+        {status === "pending" && "Instância Criada, Aguardando QR Code..."}
       </h2>
       
       <p className="text-muted-foreground mb-6">
@@ -39,6 +41,7 @@ export function ConnectionStatus({ status, attempts, errorMessage }: ConnectionS
         )}
         {status === "connected" && "Redirecionando..."}
         {status === "error" && (errorMessage || "Não foi possível estabelecer a conexão")}
+        {status === "pending" && "A instância foi criada com sucesso, aguardando geração do QR code..."}
       </p>
     </div>
   );

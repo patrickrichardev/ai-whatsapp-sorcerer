@@ -14,6 +14,7 @@ export interface EvolutionAPIResponse {
     apiUrl?: string;
     requestData?: any;
     responseStatus?: number;
+    message?: string;
   };
 }
 

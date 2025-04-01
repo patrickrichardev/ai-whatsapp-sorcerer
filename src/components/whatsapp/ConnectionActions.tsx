@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Settings } from "lucide-react";
 
 interface ConnectionActionsProps {
-  status: "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection";
+  status: "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection" | "pending";
   connectionOk: boolean | null;
   isRefreshing: boolean;
   onRefresh: () => void;
@@ -19,7 +19,7 @@ export function ConnectionActions({
 }: ConnectionActionsProps) {
   return (
     <div className="flex justify-center space-x-3">
-      {(status === "awaiting_scan" || status === "error" || (status === "testing_connection" && connectionOk === false)) && (
+      {(status === "awaiting_scan" || status === "error" || status === "pending" || (status === "testing_connection" && connectionOk === false)) && (
         <Button
           variant={status === "error" ? "destructive" : "outline"}
           className="mx-auto"
@@ -32,7 +32,8 @@ export function ConnectionActions({
               {status === "testing_connection" ? "Testando..." : "Atualizando..."}
             </>
           ) : (
-            status === "testing_connection" ? "Testar Novamente" : "Atualizar QR Code"
+            status === "testing_connection" ? "Testar Novamente" : 
+            status === "pending" ? "Buscar QR Code" : "Atualizar QR Code"
           )}
         </Button>
       )}
