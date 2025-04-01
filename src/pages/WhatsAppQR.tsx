@@ -10,12 +10,15 @@ import { QRCodeDisplay } from "@/components/whatsapp/QRCodeDisplay";
 import { ConnectionError } from "@/components/whatsapp/ConnectionError";
 import { ConnectionActions } from "@/components/whatsapp/ConnectionActions";
 import { useWhatsAppConnection } from "@/hooks/useWhatsAppConnection";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const WhatsAppQR = () => {
   const [searchParams] = useSearchParams();
   const connectionId = searchParams.get("connection_id");
   const navigate = useNavigate();
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   
   const {
     qrCode,
@@ -43,23 +46,40 @@ const WhatsAppQR = () => {
   };
 
   useEffect(() => {
-    testConnection().then(connected => {
-      if (connected) {
-        initializeConnection();
-      }
-    });
+    // Initial status check with small delay to ensure backend has time to process
+    setTimeout(() => {
+      testConnection().then(connected => {
+        if (connected) {
+          initializeConnection();
+        }
+      });
+    }, 500);
     
     const interval = setInterval(async () => {
       if (status === "awaiting_scan") {
         const isConnected = await checkStatus();
         if (isConnected) {
-          setTimeout(() => navigate("/devices"), 3000);
+          setRedirectCountdown(3);
         }
       }
     }, 5000);
     
     return () => clearInterval(interval);
   }, [connectionId, status]);
+
+  useEffect(() => {
+    // Handle redirect countdown
+    if (redirectCountdown !== null) {
+      if (redirectCountdown === 0) {
+        navigate("/devices");
+      } else {
+        const timer = setTimeout(() => {
+          setRedirectCountdown(redirectCountdown - 1);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [redirectCountdown, navigate]);
 
   useEffect(() => {
     if (status === "awaiting_scan") {
@@ -93,6 +113,15 @@ const WhatsAppQR = () => {
 
         {status === "awaiting_scan" && (
           <QRCodeDisplay qrCode={qrCode} />
+        )}
+
+        {redirectCountdown !== null && (
+          <Alert className="mb-4 bg-green-50 border-green-200">
+            <AlertCircle className="h-4 w-4 text-green-500" />
+            <AlertDescription className="text-green-700">
+              WhatsApp conectado com sucesso! Redirecionando em {redirectCountdown} segundos...
+            </AlertDescription>
+          </Alert>
         )}
 
         <ConnectionActions

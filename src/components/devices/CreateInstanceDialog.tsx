@@ -29,6 +29,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
   const [isCreatingInstance, setIsCreatingInstance] = useState(false)
   const [instanceName, setInstanceName] = useState("")
   const [selectedAgentId, setSelectedAgentId] = useState<string | "auto" | "none">("auto")
+  const [phone, setPhone] = useState("")
   const { agents } = useAgents(userId)
   const navigate = useNavigate()
 
@@ -61,6 +62,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
           connection_data: { 
             name: instanceName,
             status: 'creating',
+            phone: phone || undefined,
             use_default_agent: selectedAgentId === "auto" 
           }
         })
@@ -102,7 +104,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
         }
       }
       
-      toast.success("Instância criada com sucesso")
+      toast.success("Instância criada com sucesso! Redirecionando para configuração...")
       onOpenChange(false)
       
       // Call onSuccess to refresh the devices list
@@ -138,6 +140,19 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
               value={instanceName}
               onChange={(e) => setInstanceName(e.target.value)}
             />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone-number">Número de Telefone (opcional)</Label>
+            <Input 
+              id="phone-number" 
+              placeholder="Ex: 5511999990000 (com código do país)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Inclua o código do país (Ex: 55 para Brasil) sem símbolos ou espaços
+            </p>
           </div>
           
           <div className="space-y-2">

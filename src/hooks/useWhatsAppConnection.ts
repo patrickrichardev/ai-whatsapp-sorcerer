@@ -124,7 +124,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
   };
 
   const checkStatus = async () => {
-    if (!connectionId || status === "connected" || status === "testing_connection") return;
+    if (!connectionId || status === "connected" || status === "testing_connection") return false;
 
     try {
       const response = await checkWhatsAppStatus(connectionId);
@@ -169,12 +169,13 @@ export function useWhatsAppConnection(connectionId: string | null) {
     // Check status immediately
     checkStatus();
     
-    // Then set up interval
-    const interval = setInterval(() => {
+    // Then set up interval - FIX: Correctly store the interval ID
+    const interval = window.setInterval(() => {
       checkStatus();
     }, 5000); // Check every 5 seconds
     
-    setCheckInterval(interval);
+    // Update state with the interval ID
+    setCheckInterval(interval as unknown as number);
   };
 
   const handleRefresh = async () => {

@@ -103,6 +103,54 @@ export async function handleStatus(
           // Continue processing, QR code fetch error is not fatal
         }
         
+        // If we're in a state that indicates we should try reconnecting
+        if (statusResponse.state === 'connecting' || 
+            statusResponse.state === 'close' || 
+            statusResponse.state === 'disconnected') {
+          try {
+            console.log("Attempting to reconnect the instance...");
+            await callEvolutionAPI(
+              evolutionApiUrl,
+              `instance/connect/${instanceName}`,
+              evolutionApiKey,
+              'POST'
+            );
+            console.log("Reconnect attempt sent");
+            
+            // Wait a moment and check status again
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const newStatusResponse = await callEvolutionAPI(
+              evolutionApiUrl,
+              `instance/connectionState/${instanceName}`,
+              evolutionApiKey,
+              'GET'
+            );
+            
+            console.log("Status after reconnect attempt:", newStatusResponse);
+            
+            if (newStatusResponse.state === 'open') {
+              await supabaseClient
+                .from('agent_connections')
+                .update({
+                  is_active: true,
+                  connection_data: {
+                    ...connection.connection_data,
+                    status: 'connected'
+                  }
+                })
+                .eq('id', connection_id);
+              
+              return createResponse({
+                success: true,
+                status: 'connected'
+              });
+            }
+          } catch (reconnectError) {
+            console.error("Error during reconnect attempt:", reconnectError);
+          }
+        }
+        
         // If we get here, return the connection state from the API
         return createResponse({
           success: true,
