@@ -57,7 +57,14 @@ export async function handleStatus(
       console.log("QR code data:", qrData);
       
       if (qrData.qrcode) {
-        const qr = qrData.qrcode.split(',')[1] || qrData.qrcode;
+        let qr = qrData.qrcode;
+        
+        // Remover prefixo data:image se presente
+        if (qr.includes(',')) {
+          qr = qr.split(',')[1];
+        }
+        
+        console.log("QR code processado:", qr.substring(0, 30) + "...");
         
         await supabaseClient
           .from('agent_connections')

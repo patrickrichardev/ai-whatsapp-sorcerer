@@ -107,11 +107,16 @@ export function useWhatsAppConnection(connectionId: string | null) {
         });
       }
 
+      // Verificar se há QR code na resposta e processá-lo corretamente
       if (response.qr || response.qrcode) {
         const qrData = response.qr || response.qrcode;
         console.log("QR Code recebido, tamanho:", qrData?.length);
+        
+        // Garantir que o QR code esteja em formato completo ou base64
         setQrCode(qrData);
         setStatus("awaiting_scan");
+        // Incrementar tentativas quando um novo QR code é recebido
+        setAttempts(prev => prev + 1);
       } else if (response.status === "connected") {
         setStatus("connected");
       } else if (response.partialSuccess) {
@@ -142,6 +147,7 @@ export function useWhatsAppConnection(connectionId: string | null) {
     if (!connectionId || status === "connected" || status === "testing_connection") return false;
 
     try {
+      console.log("Verificando status para conexão:", connectionId);
       const response = await checkWhatsAppStatus(connectionId);
       console.log("Status check response:", response);
 
@@ -155,18 +161,22 @@ export function useWhatsAppConnection(connectionId: string | null) {
         setStatus("connected");
         toast.success("WhatsApp conectado com sucesso!");
         return true;
-      } else if ((response.qr || response.qrcode) && (response.qr || response.qrcode) !== qrCode) {
+      } else if ((response.qr || response.qrcode)) {
         const qrData = response.qr || response.qrcode;
-        console.log("Novo QR Code recebido");
+        console.log("Novo QR Code recebido, tamanho:", qrData?.length);
+        
+        // Garantir que o QR code esteja em formato completo ou base64
         setQrCode(qrData);
         setStatus("awaiting_scan");
+        // Incrementar tentativas quando um novo QR code é recebido
+        setAttempts(prev => prev + 1);
       }
       return false;
     } catch (error: any) {
       console.error("Erro ao verificar status:", error);
       return false;
     }
-  }, [connectionId, status, qrCode]);
+  }, [connectionId, status]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);

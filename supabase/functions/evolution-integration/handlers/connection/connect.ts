@@ -28,7 +28,7 @@ export async function handleConnect(
 
     console.log("[DEBUG] Criando instância:", instanceName);
 
-    // Cria instância
+    // Cria instância com QR code
     const createInstanceData = await callEvolutionAPI(
       evolutionApiUrl,
       "instance/create",
@@ -48,7 +48,7 @@ export async function handleConnect(
       }
     );
 
-    console.log("[DEBUG] Instância criada:", createInstanceData);
+    console.log("[DEBUG] Resposta da criação de instância:", JSON.stringify(createInstanceData, null, 2));
 
     // Check if instance was created successfully
     if (!createInstanceData || createInstanceData.error) {
@@ -57,9 +57,22 @@ export async function handleConnect(
 
     // Extract QR code from the instance creation response if available
     let qrCode = null;
-    if (createInstanceData.qrcode && createInstanceData.qrcode.base64) {
-      qrCode = createInstanceData.qrcode.base64.split(",")[1] || createInstanceData.qrcode.base64;
+    
+    // Verificar diferentes formatos possíveis de retorno do QR code
+    if (createInstanceData.qrcode) {
+      if (typeof createInstanceData.qrcode === 'string') {
+        qrCode = createInstanceData.qrcode;
+      } else if (createInstanceData.qrcode.base64) {
+        qrCode = createInstanceData.qrcode.base64;
+      }
     }
+    
+    // Remover prefixo data:image se presente
+    if (qrCode && qrCode.includes(',')) {
+      qrCode = qrCode.split(',')[1];
+    }
+
+    console.log("[DEBUG] QR Code obtido:", qrCode ? `${qrCode.substring(0, 30)}...` : "Nenhum");
 
     // Update connection in database regardless of whether we have QR code yet
     await supabaseClient
@@ -88,7 +101,7 @@ export async function handleConnect(
     // Try to get QR code if not available yet
     try {
       // Wait a moment for the instance to be ready
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       const connectionData = await callEvolutionAPI(
         evolutionApiUrl,
@@ -97,10 +110,17 @@ export async function handleConnect(
         "GET"
       );
 
-      console.log("[DEBUG] Dados do QR Code:", connectionData);
+      console.log("[DEBUG] Dados do QR Code:", JSON.stringify(connectionData, null, 2));
 
       if (connectionData && connectionData.qrcode) {
-        const qr = connectionData.qrcode.split(",")[1] || connectionData.qrcode;
+        let qr = connectionData.qrcode;
+        
+        // Remover prefixo data:image se presente
+        if (qr.includes(',')) {
+          qr = qr.split(',')[1];
+        }
+
+        console.log("[DEBUG] QR Code processado:", qr ? `${qr.substring(0, 30)}...` : "Nenhum");
 
         await supabaseClient
           .from("agent_connections")

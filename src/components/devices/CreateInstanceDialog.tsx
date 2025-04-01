@@ -108,7 +108,9 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       }
       
       // Initialize the WhatsApp instance in Evolution API
+      console.log("Inicializando instância com ID:", connectionId);
       const response = await initializeWhatsAppInstance(connectionId)
+      console.log("Resposta da inicialização:", response);
       
       if (!response.success && !response.partialSuccess) {
         // Clean up the record if the API call fails
@@ -123,11 +125,12 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       toast.success("Instância criada com sucesso")
       
       // Move to QR code display step
-      if (response.status === 'awaiting_scan' || response.qr || response.qrcode) {
+      if (response.qr || response.qrcode || response.status === 'awaiting_scan') {
         setCreationStep("qrcode")
+        console.log("QR Code disponível, movendo para etapa de escaneamento");
       } else {
-        onOpenChange(false)
-        onSuccess()
+        console.log("QR Code não disponível, aguardando...");
+        setCreationStep("qrcode") // Mesmo sem QR code inicial, vamos para a tela de QR
       }
       
     } catch (error: any) {
@@ -144,7 +147,11 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
     
     // Only set up interval when we're showing QR code and have a connection ID
     if (creationStep === "qrcode" && connectionId) {
+      // Verificar status imediatamente após a mudança para a etapa de QR code
+      checkStatus();
+      
       intervalId = window.setInterval(async () => {
+        console.log("Verificando status da conexão...");
         const isConnected = await checkStatus();
         if (isConnected) {
           toast.success("WhatsApp conectado com sucesso!");
@@ -161,6 +168,13 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
       if (intervalId) clearInterval(intervalId);
     };
   }, [creationStep, connectionId, checkStatus, onOpenChange, onSuccess]);
+
+  // Debug log para acompanhar o QR code
+  useEffect(() => {
+    if (qrCode) {
+      console.log("QR Code atualizado:", qrCode.substring(0, 30) + "...");
+    }
+  }, [qrCode]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -260,7 +274,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
               errorMessage={errorMessage}
             />
             
-            {status === "awaiting_scan" && qrCode && (
+            {status === "awaiting_scan" && (
               <QRCodeDisplay qrCode={qrCode} />
             )}
             
