@@ -12,7 +12,8 @@ export {
 export {
   initializeWhatsAppInstance,
   checkWhatsAppStatus,
-  disconnectWhatsAppInstance
+  disconnectWhatsAppInstance,
+  createEvolutionInstance
 } from "./instance";
 
 // Re-export messaging functions

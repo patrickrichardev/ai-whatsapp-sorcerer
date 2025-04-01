@@ -97,6 +97,45 @@ export const checkWhatsAppStatus = async (
 };
 
 /**
+ * Disconnect a WhatsApp instance by connection ID
+ * @param connectionId The connection ID to disconnect
+ * @returns Promise with the API response
+ */
+export const disconnectWhatsAppInstance = async (
+  connectionId: string
+): Promise<EvolutionAPIResponse> => {
+  try {
+    console.log(`Disconnecting WhatsApp instance for connection ID: ${connectionId}`);
+    
+    const { data, error } = await supabase.functions.invoke("evolution-integration", {
+      body: {
+        action: "disconnect",
+        connection_id: connectionId,
+      },
+    });
+    
+    if (error) {
+      console.error("Error disconnecting WhatsApp instance:", error);
+      return {
+        success: false,
+        error: error.message,
+        details: "Error during Evolution API function invocation",
+      };
+    }
+    
+    console.log("WhatsApp instance disconnection response:", data);
+    return data;
+  } catch (err: any) {
+    console.error("Exception disconnecting WhatsApp instance:", err);
+    return {
+      success: false,
+      error: err.message || "Unknown error",
+      details: "Exception during disconnection request",
+    };
+  }
+};
+
+/**
  * Test the connection to the Evolution API
  * @returns Promise with the API response
  */
@@ -139,8 +178,8 @@ export const testEvolutionAPIConnection = async (): Promise<EvolutionAPIResponse
           error: firstError.message || "Unknown error",
           details: "Exception during connection test",
           diagnostics: { 
-            message: testError.message,
-            secondaryError: true
+            requestData: testError.message,
+            responseStatus: 500
           }
         };
       }
