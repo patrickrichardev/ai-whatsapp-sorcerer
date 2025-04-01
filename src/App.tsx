@@ -35,7 +35,7 @@ function App() {
               <Route path="select-agent" element={<SelectAgent />} />
               <Route path="devices" element={<Devices />} />
               <Route path="connect-whatsapp" element={<ConnectWhatsApp />} />
-              <Route path="connect-whatsapp/qr" element={<WhatsAppQR />} />
+              <Route path="whatsapp-qr" element={<WhatsAppQR />} />
               <Route path="settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Route>

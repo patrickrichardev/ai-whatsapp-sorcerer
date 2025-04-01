@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { 
   Dialog, 
@@ -17,6 +16,7 @@ import { initializeWhatsAppInstance } from "@/lib/evolution-api/instance"
 import { supabase } from "@/lib/supabase"
 import { useAgents } from "@/hooks/useAgents"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useNavigate } from "react-router-dom"
 
 interface CreateInstanceDialogProps {
   isOpen: boolean
@@ -30,6 +30,7 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
   const [instanceName, setInstanceName] = useState("")
   const [selectedAgentId, setSelectedAgentId] = useState<string | "auto" | "none">("auto")
   const { agents } = useAgents(userId)
+  const navigate = useNavigate()
 
   const handleCreateInstance = async () => {
     if (!instanceName) {
@@ -89,28 +90,12 @@ export function CreateInstanceDialog({ isOpen, onOpenChange, userId, onSuccess }
         }
       }
       
-      // Initialize the WhatsApp instance in Evolution API
-      const response = await initializeWhatsAppInstance(connectionId)
-      
-      if (!response.success) {
-        // Clean up the record if the API call fails
-        await supabase
-          .from('agent_connections')
-          .delete()
-          .eq('id', connectionId)
-          
-        throw new Error(response.error || "Falha ao criar instância")
-      }
-      
       toast.success("Instância criada com sucesso")
       onOpenChange(false)
       onSuccess()
       
-      // Redirect to QR code page if necessary
-      if (response.status === 'awaiting_scan' && (response.qr || response.qrcode)) {
-        window.location.href = `/whatsapp-qr?connection_id=${connectionId}`
-      }
-      
+      // Imediatamente redirecionar para a página do QR code
+      navigate(`/whatsapp-qr?connection_id=${connectionId}`)
     } catch (error: any) {
       console.error("Erro ao criar instância:", error)
       toast.error(`Erro ao criar instância: ${error.message}`)
