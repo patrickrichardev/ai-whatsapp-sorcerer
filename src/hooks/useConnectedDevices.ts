@@ -30,11 +30,10 @@ export function useConnectedDevices(userId: string | undefined) {
       
       if (error) throw error
       
-      // Filtrar para mostrar apenas instâncias válidas e remover a instância padrão "as"
+      // Filtrar para mostrar apenas instâncias válidas
       const validDevices = data?.filter(device => 
         device.connection_data && 
-        device.connection_data.name &&
-        device.connection_data.name !== "as" // Remover a instância com nome "as"
+        device.connection_data.name
       ) || [];
       
       setConnectedDevices(validDevices)
@@ -70,30 +69,10 @@ export function useConnectedDevices(userId: string | undefined) {
     }
   }
 
-  // Método para remover todas as instâncias com nome "as"
-  const deleteDefaultDevices = async () => {
-    try {
-      const { error } = await supabase
-        .from('agent_connections')
-        .delete()
-        .eq('platform', 'whatsapp')
-        .filter('connection_data->name', 'eq', 'as')
-        
-      if (error) throw error
-      
-      toast.success("Instâncias padrão removidas com sucesso")
-      fetchConnectedDevices() // Atualizar a lista após excluir
-    } catch (error) {
-      console.error("Erro ao excluir instâncias padrão:", error)
-      toast.error("Não foi possível remover as instâncias padrão")
-    }
-  }
-
   return {
     connectedDevices,
     isLoading,
     fetchConnectedDevices,
-    deleteDevice,
-    deleteDefaultDevices
+    deleteDevice
   }
 }

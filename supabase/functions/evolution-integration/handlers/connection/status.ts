@@ -1,208 +1,88 @@
 
-import { createResponse, createErrorResponse, callEvolutionAPI, getCredentials } from "../../utils.ts";
+import { createResponse, callEvolutionAPI, getCredentials } from "../../utils.ts";
 
-// Handler for checking WhatsApp instance status
+// Handler for checking status
 export async function handleStatus(
-  connection_id: string, 
+  connection_id: string,
   supabaseClient: any,
   credentials?: { apiUrl?: string; apiKey?: string }
 ) {
   try {
-    if (!connection_id) {
-      return createErrorResponse("Connection ID is required", 400);
-    }
-    
-    // Get cached connection data first
-    const { data: connection, error: connectionError } = await supabaseClient
-      .from('agent_connections')
-      .select('*')
-      .eq('id', connection_id)
-      .single();
-    
-    if (connectionError) {
-      throw new Error(`Error fetching connection data: ${connectionError.message}`);
-    }
-    
-    if (!connection) {
-      return createErrorResponse(`Connection not found: ${connection_id}`, 404);
-    }
-    
     const instanceName = `conn_${connection_id}`;
     const { evolutionApiUrl, evolutionApiKey } = await getCredentials(credentials);
     
-    console.log(`Checking connection status for ${instanceName}`);
+    console.log(`Checking status for instance: ${instanceName}`);
     
-    // Check connection status
-    try {
-      const statusResponse = await callEvolutionAPI(
-        evolutionApiUrl,
-        `instance/connectionState/${instanceName}`,
-        evolutionApiKey,
-        'GET'
-      );
-      
-      console.log("Connection status response:", statusResponse);
-      
-      if (statusResponse && statusResponse.state === 'open') {
-        // If connected, update database and return status
-        await supabaseClient
-          .from('agent_connections')
-          .update({
-            is_active: true,
-            connection_data: { 
-              ...connection.connection_data,
-              status: 'connected' 
-            }
-          })
-          .eq('id', connection_id);
-        
-        return createResponse({
-          success: true,
-          status: 'connected'
-        });
-      }
-      
-      // If not connected, check if we need a new QR code
-      if (statusResponse && statusResponse.state !== 'open') {
-        try {
-          // Attempt to get QR code
-          const qrResponse = await callEvolutionAPI(
-            evolutionApiUrl,
-            `instance/qrcode/${instanceName}`,
-            evolutionApiKey,
-            'GET'
-          );
-          
-          console.log("QR code response:", qrResponse);
-          
-          if (qrResponse && qrResponse.qrcode) {
-            // Extract QR code data
-            const qr = qrResponse.qrcode.split(',')[1] || qrResponse.qrcode;
-            
-            // Update connection with new QR code
-            await supabaseClient
-              .from('agent_connections')
-              .update({
-                is_active: false,
-                connection_data: {
-                  ...connection.connection_data,
-                  status: 'awaiting_scan',
-                  qr
-                }
-              })
-              .eq('id', connection_id);
-            
-            return createResponse({
-              success: true,
-              status: 'awaiting_scan',
-              qr
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching QR code:", error);
-          // Continue processing, QR code fetch error is not fatal
-        }
-        
-        // If we're in a state that indicates we should try reconnecting
-        if (statusResponse.state === 'connecting' || 
-            statusResponse.state === 'close' || 
-            statusResponse.state === 'disconnected') {
-          try {
-            console.log("Attempting to reconnect the instance...");
-            await callEvolutionAPI(
-              evolutionApiUrl,
-              `instance/connect/${instanceName}`,
-              evolutionApiKey,
-              'POST'
-            );
-            console.log("Reconnect attempt sent");
-            
-            // Wait a moment and check status again
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            const newStatusResponse = await callEvolutionAPI(
-              evolutionApiUrl,
-              `instance/connectionState/${instanceName}`,
-              evolutionApiKey,
-              'GET'
-            );
-            
-            console.log("Status after reconnect attempt:", newStatusResponse);
-            
-            if (newStatusResponse.state === 'open') {
-              await supabaseClient
-                .from('agent_connections')
-                .update({
-                  is_active: true,
-                  connection_data: {
-                    ...connection.connection_data,
-                    status: 'connected'
-                  }
-                })
-                .eq('id', connection_id);
-              
-              return createResponse({
-                success: true,
-                status: 'connected'
-              });
-            }
-          } catch (reconnectError) {
-            console.error("Error during reconnect attempt:", reconnectError);
-          }
-        }
-        
-        // If we get here, return the connection state from the API
-        return createResponse({
-          success: true,
-          status: statusResponse.state,
-          details: "Instance exists but is not connected"
-        });
-      }
-      
-      // Default response if statusResponse exists but none of the conditions matched
-      return createResponse({
-        success: true,
-        status: statusResponse.state || 'unknown',
-        details: "Connection status indeterminate"
-      });
-      
-    } catch (error) {
-      console.error("Error checking connection status:", error);
-      
-      // Check if the error might be because the instance doesn't exist
-      if (error.message && error.message.includes('404')) {
-        console.log("Instance not found, it may need to be created");
-        
-        // Update connection to reflect it needs creation
-        await supabaseClient
-          .from('agent_connections')
-          .update({
-            is_active: false,
-            connection_data: {
-              ...connection.connection_data,
-              status: 'needs_creation'
-            }
-          })
-          .eq('id', connection_id);
-        
-        return createResponse({
-          success: true,
-          status: 'needs_creation',
-          details: "Instance needs to be created first"
-        });
-      }
-      
-      // For other errors
-      return createErrorResponse(
-        `Error checking connection status: ${error.message}`,
-        500
-      );
-    }
-  } catch (error) {
-    console.error("Error in status handler:", error);
-    return createErrorResponse(
-      `Error processing status request: ${error.message}`,
-      500
+    // Add debug logs for status URL
+    console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+    console.log('[DEBUG] endpoint:', `instance/connectionState/${instanceName}`);
+    console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/connectionState/${instanceName}`);
+    
+    // Endpoint correto sem "manager/"
+    const statusData = await callEvolutionAPI(
+      evolutionApiUrl,
+      `instance/connectionState/${instanceName}`,
+      evolutionApiKey
     );
+    
+    console.log("Status data:", statusData);
+    
+    if (statusData.state === 'open') {
+      await supabaseClient
+        .from('agent_connections')
+        .update({
+          is_active: true,
+          connection_data: { status: 'connected' }
+        })
+        .eq('id', connection_id);
+
+      return createResponse({ 
+        success: true,
+        status: 'connected' 
+      });
+    }
+
+    // Se não estiver conectado, tenta obter novo QR code
+    console.log(`Getting QR code for instance: ${instanceName}`);
+    
+    try {
+      // Add debug logs for QR code URL
+      console.log('[DEBUG] baseUrl:', evolutionApiUrl);
+      console.log('[DEBUG] endpoint:', `instance/qrcode/${instanceName}`);
+      console.log('[DEBUG] Final URL:', `${evolutionApiUrl}/instance/qrcode/${instanceName}`);
+      
+      // Endpoint correto sem "manager/"
+      const qrData = await callEvolutionAPI(
+        evolutionApiUrl,
+        `instance/qrcode/${instanceName}`,
+        evolutionApiKey
+      );
+      
+      console.log("QR code data:", qrData);
+      
+      if (qrData.qrcode) {
+        const qr = qrData.qrcode.split(',')[1] || qrData.qrcode;
+        return createResponse({ 
+          success: true,
+          qr, 
+          status: 'awaiting_scan' 
+        });
+      }
+    } catch (qrError) {
+      console.warn("Could not get QR code:", qrError);
+      // Continue with current status
+    }
+
+    return createResponse({ 
+      success: true,
+      status: statusData.state || 'unknown' 
+    });
+  } catch (error) {
+    console.error("Error in status check:", error);
+    return createResponse({
+      success: false,
+      error: error.message || "Erro desconhecido",
+      details: error.toString()
+    }, 500);
   }
 }
