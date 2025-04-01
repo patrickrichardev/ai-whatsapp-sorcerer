@@ -12,12 +12,13 @@ export function QRCodeDisplay({ qrCode }: QRCodeDisplayProps) {
     );
   }
   
-  // Determine se o QR code já tem o prefixo data:image ou não
-  const qrSrc = qrCode.includes("data:image") 
+  // Processar o QR code para garantir que esteja no formato correto
+  // Verificamos se já é um data URL ou se precisamos adicionar o prefixo
+  const qrSrc = qrCode.startsWith('data:') 
     ? qrCode 
     : `data:image/png;base64,${qrCode}`;
   
-  console.log("Renderizando QR code, começo:", qrCode.substring(0, 30));
+  console.log("Renderizando QR code com comprimento:", qrSrc.length);
   
   return (
     <div className="aspect-square max-w-[300px] mx-auto mb-6 bg-white p-4 rounded-lg">
@@ -26,7 +27,8 @@ export function QRCodeDisplay({ qrCode }: QRCodeDisplayProps) {
         alt="WhatsApp QR Code"
         className="w-full h-full"
         onError={(e) => {
-          console.error("Falha ao carregar imagem do QR code:", qrSrc.substring(0, 50));
+          console.error("Falha ao carregar imagem do QR code");
+          console.error("Dados do QR code (primeiros 50 caracteres):", qrSrc.substring(0, 50));
           (e.target as HTMLImageElement).style.display = 'none';
           const fallback = document.createElement('div');
           fallback.className = "p-4 text-red-500 text-center";

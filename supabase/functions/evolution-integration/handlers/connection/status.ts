@@ -59,9 +59,20 @@ export async function handleStatus(
       if (qrData.qrcode) {
         let qr = qrData.qrcode;
         
-        // Remover prefixo data:image se presente
-        if (qr.includes(',')) {
-          qr = qr.split(',')[1];
+        // Processamento do QR code para padronizar formato
+        if (typeof qr === 'string') {
+          // Se for string com prefixo data:image, remover
+          if (qr.includes('data:image')) {
+            qr = qr.split(',')[1];
+          }
+        } else if (typeof qr === 'object') {
+          // Se for objeto, extrair base64
+          if (qr.base64) {
+            qr = qr.base64;
+            if (qr.includes('data:image')) {
+              qr = qr.split(',')[1];
+            }
+          }
         }
         
         console.log("QR code processado:", qr.substring(0, 30) + "...");

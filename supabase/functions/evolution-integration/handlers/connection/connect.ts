@@ -60,15 +60,22 @@ export async function handleConnect(
     
     // Verificar diferentes formatos possíveis de retorno do QR code
     if (createInstanceData.qrcode) {
+      // Se for string direta
       if (typeof createInstanceData.qrcode === 'string') {
         qrCode = createInstanceData.qrcode;
-      } else if (createInstanceData.qrcode.base64) {
+      } 
+      // Se for objeto com base64
+      else if (createInstanceData.qrcode.base64) {
         qrCode = createInstanceData.qrcode.base64;
+      }
+      // Se for objeto com code
+      else if (createInstanceData.qrcode.code) {
+        qrCode = createInstanceData.qrcode.code;
       }
     }
     
-    // Remover prefixo data:image se presente
-    if (qrCode && qrCode.includes(',')) {
+    // Remover prefixo data:image se presente para padronizar
+    if (qrCode && qrCode.includes('data:image')) {
       qrCode = qrCode.split(',')[1];
     }
 
@@ -100,7 +107,7 @@ export async function handleConnect(
 
     // Try to get QR code if not available yet
     try {
-      // Wait a moment for the instance to be ready
+      // Aguardar um momento para a instância estar pronta
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const connectionData = await callEvolutionAPI(
@@ -115,9 +122,18 @@ export async function handleConnect(
       if (connectionData && connectionData.qrcode) {
         let qr = connectionData.qrcode;
         
-        // Remover prefixo data:image se presente
-        if (qr.includes(',')) {
+        // Se for string com prefixo, remover o prefixo
+        if (typeof qr === 'string' && qr.includes('data:image')) {
           qr = qr.split(',')[1];
+        }
+        
+        // Se for objeto, extrair base64
+        if (typeof qr === 'object' && qr.base64) {
+          qr = qr.base64;
+          // E também remover prefixo se tiver
+          if (qr.includes('data:image')) {
+            qr = qr.split(',')[1];
+          }
         }
 
         console.log("[DEBUG] QR Code processado:", qr ? `${qr.substring(0, 30)}...` : "Nenhum");
