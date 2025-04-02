@@ -1,7 +1,7 @@
 
 import { Outlet } from "react-router-dom"
 import { Toaster } from "@/components/ui/sonner"
-import { Sidebar } from "./Sidebar"
+import Sidebar from "./Sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
