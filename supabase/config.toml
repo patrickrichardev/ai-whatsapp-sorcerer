@@ -92,3 +92,9 @@ port = 54321
 
 [functions.evolution-whatsapp]
 verify_jwt = false
+
+[functions.evolution-integration]
+verify_jwt = false
+
+[functions.check-evolution-config]
+verify_jwt = false

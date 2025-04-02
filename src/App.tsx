@@ -1,13 +1,13 @@
+
 import { createContext, Suspense, lazy, useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { Layout } from "@/components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import Index from "@/pages/Index";
-import { useTheme } from "@/hooks/useTheme";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
@@ -16,12 +16,14 @@ const LiveChat = lazy(() => import("@/pages/LiveChat"));
 const WhatsAppQR = lazy(() => import("@/pages/WhatsAppQR"));
 const Devices = lazy(() => import("@/pages/Devices"));
 const WhatsAppConnect = lazy(() => import("@/pages/WhatsAppConnect"));
+const CheckApiConfig = lazy(() => import("@/pages/CheckApiConfig"));
+const Settings = lazy(() => import("@/pages/Settings"));
 
 export const SupabaseContext = createContext(null);
 
 function App() {
   const [supabaseClient, setSupabaseClient] = useState(null);
-  const { theme } = useTheme();
+  const [theme, setTheme] = useState("light");
 
   useEffect(() => {
     setSupabaseClient(
@@ -120,6 +122,16 @@ function App() {
                       </Suspense>
                     </Layout>
                   </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/check-api-config"
+                element={
+                  <Layout>
+                    <Suspense fallback={<div>Carregando...</div>}>
+                      <CheckApiConfig />
+                    </Suspense>
+                  </Layout>
                 }
               />
             </Routes>
