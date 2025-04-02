@@ -127,11 +127,13 @@ function App() {
               <Route
                 path="/check-api-config"
                 element={
-                  <Layout>
-                    <Suspense fallback={<div>Carregando...</div>}>
-                      <CheckApiConfig />
-                    </Suspense>
-                  </Layout>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Suspense fallback={<div>Carregando...</div>}>
+                        <CheckApiConfig />
+                      </Suspense>
+                    </Layout>
+                  </ProtectedRoute>
                 }
               />
             </Routes>
