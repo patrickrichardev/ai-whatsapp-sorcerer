@@ -16,18 +16,15 @@ serve(async (req) => {
     // Obter a URL e chave da API do ambiente
     const apiUrl = Deno.env.get('EVOLUTION_API_URL') || '';
     
-    // Mascarar a API key por segurança - mostramos apenas os últimos 4 caracteres
+    // Retornar a API key completa sem mascarar
     const apiKey = Deno.env.get('EVOLUTION_API_KEY') || '';
-    const maskedApiKey = apiKey 
-      ? `***${apiKey.substring(Math.max(0, apiKey.length - 4))}` 
-      : 'Não configurada';
 
     return new Response(
       JSON.stringify({
         success: true,
         config: {
           evolution_api_url: apiUrl,
-          evolution_api_key: maskedApiKey,
+          evolution_api_key: apiKey,
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

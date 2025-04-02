@@ -69,7 +69,7 @@ export default function CheckApiConfig() {
               </div>
               
               <div>
-                <h3 className="font-medium text-gray-700">API Key (mascarada):</h3>
+                <h3 className="font-medium text-gray-700">API Key (completa):</h3>
                 <pre className="mt-1 p-2 bg-gray-100 rounded overflow-auto break-all">
                   {config?.evolution_api_key || "Não configurada"}
                 </pre>
