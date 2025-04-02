@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Layout from "@/components/layout/Layout";
 import Index from "@/pages/Index";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
@@ -42,101 +43,103 @@ function App() {
       >
         <SupabaseContext.Provider value={supabaseClient}>
           <Router>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route
-                path="/login"
-                element={
-                  <Suspense fallback={<div>Carregando...</div>}>
-                    <Login />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/create"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <CreateAssistant />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat/:id"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <LiveChat />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/whatsapp"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <WhatsAppQR />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/devices"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <Devices />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/whatsapp-connect"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <WhatsAppConnect />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <Settings />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/check-api-config"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Suspense fallback={<div>Carregando...</div>}>
-                        <CheckApiConfig />
-                      </Suspense>
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route
+                  path="/login"
+                  element={
+                    <Suspense fallback={<div>Carregando...</div>}>
+                      <Login />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/create"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <CreateAssistant />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/chat/:id"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <LiveChat />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/whatsapp"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <WhatsAppQR />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/devices"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <Devices />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/whatsapp-connect"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <WhatsAppConnect />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <Settings />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/check-api-config"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suspense fallback={<div>Carregando...</div>}>
+                          <CheckApiConfig />
+                        </Suspense>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </AuthProvider>
           </Router>
         </SupabaseContext.Provider>
         <Toaster />
