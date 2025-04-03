@@ -1,10 +1,24 @@
 
+export type ConnectionStatusType =
+  | "loading"
+  | "awaiting_scan"
+  | "connected"
+  | "error"
+  | "testing_connection"
+  | "pending";
+
+
 export interface EvolutionAPIResponse {
   success: boolean;
   message?: string;
   qr?: string;
   qrcode?: string;
-  status?: string;
+  status?:  | "loading"
+  | "awaiting_scan"
+  | "connected"
+  | "error"
+  | "testing_connection"
+  | "pending";
   error?: string;
   details?: string;
   partialSuccess?: boolean;

@@ -3,8 +3,6 @@ import { EvolutionAPIResponse } from "./types";
 
 export async function initializeWhatsAppInstance(connectionId: string): Promise<EvolutionAPIResponse> {
   try {
-    console.log("Initializing WhatsApp instance for connection:", connectionId);
-    
     const { data, error } = await supabase.functions.invoke("evolution-integration", {
       body: { 
         action: "connect", 
@@ -21,7 +19,6 @@ export async function initializeWhatsAppInstance(connectionId: string): Promise<
       };
     }
     
-    console.log("Response from Evolution API:", data);
     
     if (!data) {
       return {

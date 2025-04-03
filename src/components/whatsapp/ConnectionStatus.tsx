@@ -1,7 +1,7 @@
 
 import { Loader2, CheckCircle2, XCircle, Wifi, QrCode, Clock } from "lucide-react";
 
-type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection" | "pending";
+export type ConnectionStatus = "loading" | "awaiting_scan" | "connected" | "error" | "testing_connection" | "pending";
 
 interface ConnectionStatusProps {
   status: ConnectionStatus;
@@ -10,6 +10,7 @@ interface ConnectionStatusProps {
 }
 
 export function ConnectionStatus({ status, attempts, errorMessage }: ConnectionStatusProps) {
+  console.log(`ConnectionStatus Component, status:${status}`)
   return (
     <div className="mb-6">
       <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
