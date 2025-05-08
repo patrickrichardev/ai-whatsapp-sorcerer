@@ -2,11 +2,15 @@
 import { useState } from "react"
 import AIChat from "@/components/chat/AIChat"
 import { AnimatePresence, motion } from "framer-motion"
-import { PanelLeft } from "lucide-react"
+import { PanelLeft, Moon, Sun, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTheme } from "@/components/theme/ThemeProvider"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function ContentAssistant() {
   const [isMenuOpen, setIsMenuOpen] = useState(true)
+  const { theme, setTheme } = useTheme()
+  const { signOut } = useAuth()
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -61,6 +65,30 @@ export default function ContentAssistant() {
                   Em breve
                 </div>
               </div>
+            </div>
+
+            <div className="absolute bottom-0 w-full border-t p-3 space-y-2 bg-muted/20">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full justify-start gap-2"
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              >
+                {theme === "light" ? (
+                  <><Moon className="h-4 w-4" /> Modo Escuro</>
+                ) : (
+                  <><Sun className="h-4 w-4" /> Modo Claro</>
+                )}
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="w-full justify-start gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/5"
+                onClick={signOut}
+              >
+                <LogOut className="h-4 w-4" /> Sair
+              </Button>
             </div>
           </motion.div>
         )}
