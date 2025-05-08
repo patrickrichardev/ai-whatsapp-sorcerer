@@ -1,61 +1,72 @@
 
 import { useState, useEffect } from "react"
 import { AnimatePresence } from "framer-motion"
-import { PanelLeft, Send, Mic, Image, MessageSquare } from "lucide-react"
+import { Send, Mic, Image, MessageSquare, PlusIcon, Globe, Lightbulb, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import MessageList, { Message } from "./MessageList"
 import ChatSidebar from "./ChatSidebar"
 import ContextPanel from "./ContextPanel"
+import { cn } from "@/lib/utils"
+
+// Sample welcome message for demonstration
+const welcomeMessage = {
+  id: "welcome-message",
+  content: `Aqui está o protótipo visual do painel:
+
+[Baixar imagem do layout](https://exemplo.com/imagem.jpg)`,
+  role: "assistant",
+  timestamp: new Date(),
+  hasAttachment: true
+};
 
 // Sample responses for demonstration
 const exampleResponses = [
   {
-    content: `Aqui está uma ideia de legenda para o Instagram sobre autocuidado:
+    content: `Aqui estão algumas idéias para seu layout:
 
-*"Pausas não são prêmios, são necessidades. ☕️✨*
+1. Mantenha os tons de azul e verde para transmitir confiança
+2. Use ícones mais minimalistas nas áreas de navegação
+3. Adicione mais espaço entre os elementos para melhorar a legibilidade
+4. Considere fontes sans-serif para uma aparência mais moderna
 
-Normalizar o autocuidado é entender que você não precisa estar esgotado para merecer um momento só seu.
-
-O que você tem feito para cuidar da sua saúde mental hoje?
-
-#AutoCuidado #SaúdeMental #BemEstar #EquilíbrioEmocional #MomentoPraVocê"`,
-    hasHashtags: true
+Gostaria que eu elaborasse alguma dessas idéias em particular?`,
+    hasActions: true
   },
   {
-    content: `Roteiro para Reels - Tutorial de Maquiagem Rápida (60 segundos)
+    content: `Pesquisei por exemplos de painéis de IA para redes sociais que possam inspirar mais opções de estilo.
 
-**Cena 1 (0-10s):**
-👉 Apareça sem maquiagem, olhando para câmera
-👉 Texto na tela: "Pronta em 5 minutos? É possível!"
-👉 Áudio: Música animada e tendência
+Aqui estão algumas tendências atuais:
+- Interfaces com modo escuro como padrão
+- Elementos de UI com bordas arredondadas
+- Uso de ícones consistentes
+- Áreas de sugestão claramente delimitadas
+- Feedback visual imediato para ações do usuário
 
-**Cena 2 (10-30s):**
-👉 Mostre os produtos que vai usar (base, corretivo, blush, máscara)
-👉 Técnica rápida: aplique base com os dedos
-👉 Texto: "Dica: produtos cremosos são mais rápidos"
-
-**Cena 3 (30-50s):**
-👉 Aplique blush nas maçãs do rosto e esfume para as têmporas
-👉 Máscara de cílios apenas nas pontas para um olhar aberto
-👉 Texto: "Concentre-se no que faz diferença: olhos e bochechas"
-
-**Cena 4 (50-60s):**
-👉 Resultado final com comparação antes/depois
-👉 Call to action: "Salve para testar depois!"
-👉 Encerre com sua frase característica`,
-    hasHashtags: false
+Posso compartilhar exemplos visuais se desejar.`,
+    hasActions: false
   }
 ];
 
-// Quick command suggestions
-const quickCommands = [
-  { icon: <MessageSquare className="h-4 w-4" />, label: "Criar legenda para Instagram" },
-  { icon: <Image className="h-4 w-4" />, label: "Ideia de roteiro para Reels" },
-  { icon: <MessageSquare className="h-4 w-4" />, label: "Calendário de postagens" },
-  { icon: <Image className="h-4 w-4" />, label: "Criar carrossel educativo" },
-  { icon: <MessageSquare className="h-4 w-4" />, label: "Sugestão de copy para anúncio" },
-]
+// Suggestion prompts
+const suggestionPrompts = [
+  { 
+    icon: <Globe className="h-4 w-4" />, 
+    label: "Pesquise por exemplos de painéis de IA para redes sociais que possam inspirar mais opções de estilo." 
+  },
+  { 
+    icon: <Lightbulb className="h-4 w-4" />, 
+    label: "Pesquise alternativas de design para otimizar a experiência do usuário com a IA de criação de conteúdo." 
+  },
+];
+
+// Command toolbar items
+const toolbarItems = [
+  { icon: <PlusIcon className="h-4 w-4" />, label: "" },
+  { icon: <Search className="h-4 w-4" />, label: "Procurar" },
+  { icon: <MessageSquare className="h-4 w-4" />, label: "Investigar a fundo" },
+  { icon: <Image className="h-4 w-4" />, label: "Criar imagem" },
+];
 
 interface SocialContentChatProps {
   isContextOpen: boolean;
@@ -66,17 +77,11 @@ export default function SocialContentChat({
   isContextOpen,
   setIsContextOpen
 }: SocialContentChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome-message",
-      content: "Olá! Sou seu assistente especializado em criação de conteúdo para redes sociais. Como posso ajudar você hoje?",
-      role: "assistant",
-      timestamp: new Date()
-    }
-  ])
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage])
   const [isTyping, setIsTyping] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [inputValue, setInputValue] = useState("")
+  const [currentSuggestion, setCurrentSuggestion] = useState<number | null>(null)
 
   // Function to handle sending a new message
   const handleSendMessage = (message: string) => {
@@ -91,17 +96,18 @@ export default function SocialContentChat({
     
     setMessages(prev => [...prev, userMessage])
     setInputValue("")
+    setCurrentSuggestion(null)
     
     // Simulate AI response
-    simulateAIResponse(userMessage.content)
+    simulateAIResponse()
   }
   
   // Function to simulate new message from AI
-  const simulateAIResponse = (prompt: string) => {
+  const simulateAIResponse = () => {
     setIsTyping(true)
     
     setTimeout(() => {
-      const responseIndex = prompt.toLowerCase().includes("reels") ? 1 : 0
+      const responseIndex = Math.floor(Math.random() * exampleResponses.length)
       const response = exampleResponses[responseIndex]
       
       const assistantMessage: Message = {
@@ -109,7 +115,7 @@ export default function SocialContentChat({
         content: response.content,
         role: "assistant",
         timestamp: new Date(),
-        hasHashtags: response.hasHashtags
+        hasActions: response.hasActions
       }
       
       setMessages(prev => [...prev, assistantMessage])
@@ -133,21 +139,25 @@ export default function SocialContentChat({
     }
   }
   
-  // For demonstration, simulate a conversation
+  const handleSuggestionClick = (index: number) => {
+    setCurrentSuggestion(index)
+    setInputValue(suggestionPrompts[index].label)
+  }
+  
+  // For demonstration, simulate follow-up suggestion if needed
   useEffect(() => {
-    if (messages.length === 1) {
-      // First time loading, simulate user message after a delay
+    if (messages.length === 1 && messages[0].id === "welcome-message") {
+      // Show follow-up message after welcome
       setTimeout(() => {
-        const userMessage: Message = {
-          id: `user-demo-1`,
-          content: "Preciso de uma legenda criativa para um post sobre autocuidado no Instagram",
-          role: "user",
-          timestamp: new Date()
-        }
-        setMessages(prev => [...prev, userMessage])
-        
-        // Then simulate AI response
-        simulateAIResponse(userMessage.content)
+        setMessages(prev => [
+          ...prev,
+          {
+            id: "follow-up",
+            content: "Gostou do layout? Quer ajustar algum detalhe no protótipo?",
+            role: "assistant",
+            timestamp: new Date()
+          }
+        ])
       }, 1000)
     }
   }, [])
@@ -158,59 +168,81 @@ export default function SocialContentChat({
       <ChatSidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
       {/* Main Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-background to-muted/20">
-        {/* Quick commands */}
-        <div className="px-4 py-3 border-b overflow-x-auto flex-shrink-0">
-          <div className="flex space-x-2">
-            {quickCommands.map((command, index) => (
-              <Button 
-                key={index} 
-                variant="outline" 
-                size="sm" 
-                className="whitespace-nowrap"
-                onClick={() => setInputValue(command.label)}
-              >
-                {command.icon}
-                <span className="ml-1">{command.label}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      
+      <div className="flex-1 overflow-hidden flex flex-col">
         {/* Messages Section */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-4 md:px-20 lg:px-32 max-w-5xl mx-auto w-full">
           <MessageList 
             messages={messages} 
             isTyping={isTyping} 
             onLikeMessage={handleLikeMessage}
           />
+          
+          {/* Suggestion Prompts */}
+          {messages.length > 0 && !isTyping && (
+            <div className="my-6 space-y-4 max-w-3xl mx-auto">
+              {suggestionPrompts.map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start gap-2 py-3 px-4 text-left text-muted-foreground border rounded-lg hover:bg-muted hover:text-foreground",
+                    currentSuggestion === index && "bg-muted/50"
+                  )}
+                  onClick={() => handleSuggestionClick(index)}
+                >
+                  {prompt.icon}
+                  <span className="text-sm">{prompt.label}</span>
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
         
         {/* Input Box */}
-        <div className="border-t bg-card/50 backdrop-blur-sm p-4 sticky bottom-0 flex-shrink-0">
-          <div className="max-w-4xl mx-auto flex flex-col">
-            <div className="flex items-end gap-2">
+        <div className="border-t bg-background p-4 sticky bottom-0 flex-shrink-0">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative rounded-xl border shadow-sm bg-background">
+              {/* Toolbar */}
+              <div className="absolute bottom-12 left-0 right-0 flex items-center justify-center space-x-1 py-2">
+                <div className="bg-background border rounded-full flex items-center shadow-sm">
+                  {toolbarItems.map((item, idx) => (
+                    <Button 
+                      key={idx}
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "rounded-full px-4 py-2 text-muted-foreground",
+                        idx === 0 && "border-r"
+                      )}
+                    >
+                      {item.icon}
+                      {item.label && <span className="ml-2">{item.label}</span>}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
               <Textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Descreva o conteúdo que você precisa..."
-                className="min-h-[60px] max-h-[200px] flex-1 resize-none overflow-auto rounded-xl"
-                rows={2}
+                placeholder="Pergunte qualquer coisa"
+                className="min-h-[60px] max-h-[200px] resize-none overflow-auto rounded-xl border-0 py-3 px-4 focus-visible:ring-0 focus-visible:ring-offset-0"
+                rows={1}
               />
-              <div className="flex flex-col gap-2">
+              
+              <div className="absolute right-2 bottom-2 flex items-center space-x-2">
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="rounded-xl h-8 w-8"
-                  onClick={() => !isContextOpen && setIsContextOpen(true)}
+                  className="h-8 w-8 rounded-full opacity-70 hover:opacity-100"
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <Mic className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={() => handleSendMessage(inputValue)}
                   disabled={!inputValue.trim()}
-                  className="rounded-xl h-8 w-8"
+                  className="h-8 w-8 rounded-full"
                   size="icon"
                 >
                   <Send className="h-4 w-4" />
@@ -218,27 +250,12 @@ export default function SocialContentChat({
               </div>
             </div>
             
-            <div className="flex justify-between items-center mt-3">
-              <div className="flex gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Mic className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Image className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                AI Social Content Pro | v1.0
-              </div>
+            <div className="mt-2 text-center text-xs text-muted-foreground">
+              O ChatGPT pode cometer erros. Considere verificar informações importantes.
             </div>
           </div>
         </div>
       </div>
-
-      {/* Context Panel - Right */}
-      {isContextOpen && (
-        <ContextPanel onClose={() => setIsContextOpen(false)} />
-      )}
     </div>
   )
 }

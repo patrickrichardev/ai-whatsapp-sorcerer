@@ -11,6 +11,8 @@ export interface Message {
   timestamp: Date;
   likes?: number;
   hasHashtags?: boolean;
+  hasAttachment?: boolean;
+  hasActions?: boolean;
   sender_type?: 'customer' | 'agent';
 }
 
@@ -28,7 +30,7 @@ const MessageList = ({ messages, isTyping = false, onLikeMessage = () => {} }: M
   }, [messages, isTyping])
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+    <div className="w-full max-w-3xl mx-auto pt-8">
       <AnimatePresence initial={false}>
         {messages.map((message) => (
           <MessageItem 
@@ -39,7 +41,17 @@ const MessageList = ({ messages, isTyping = false, onLikeMessage = () => {} }: M
         ))}
       </AnimatePresence>
       
-      {isTyping && <TypingIndicator />}
+      {isTyping && (
+        <div className="flex items-start gap-4 mb-6">
+          <div className="h-8 w-8 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary text-xs">AI</span>
+          </div>
+          <div>
+            <div className="text-sm font-medium mb-1">ChatGPT</div>
+            <TypingIndicator />
+          </div>
+        </div>
+      )}
       
       <div ref={messagesEndRef} />
     </div>
