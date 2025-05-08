@@ -1,162 +1,90 @@
 
-import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
-import { toast } from "sonner"
-import { Chat } from "./ChatLayout"
-import ChatSidebarHeader from "./ChatSidebarHeader"
-import ChatSidebarFilterTabs from "./ChatSidebarFilterTabs"
-import DateFilterBanner from "./DateFilterBanner"
-import ChatItem from "./ChatItem"
+import { useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { FileText, Folder, HelpCircle, LogOut, Moon, Sun } from "lucide-react"
+import { useTheme } from "@/components/theme/ThemeProvider"
+import { useAuth } from "@/contexts/AuthContext"
+import { AnimatePresence, motion } from "framer-motion"
 
 interface ChatSidebarProps {
-  onSelectChat: (chat: Chat) => void
-  selectedChat: Chat | null
+  isMenuOpen: boolean;
+  setIsMenuOpen: (isOpen: boolean) => void;
 }
 
-export default function ChatSidebar({ onSelectChat, selectedChat }: ChatSidebarProps) {
-  const [chats, setChats] = useState<Chat[]>([])
-  const [filter, setFilter] = useState<'all' | 'waiting' | 'closed'>('all')
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const loadChats = async () => {
-      setIsLoading(true)
-      try {
-        let query = supabase
-          .from('chat_conversations')
-          .select('*')
-          .order('updated_at', { ascending: false })
-
-        if (filter === 'waiting') {
-          query = query.eq('status', 'open')
-        } else if (filter === 'closed') {
-          query = query.eq('status', 'closed')
-        }
-
-        // Add filter by date if selected
-        if (selectedDate) {
-          const startOfDay = new Date(selectedDate)
-          startOfDay.setHours(0, 0, 0, 0)
-          
-          const endOfDay = new Date(selectedDate)
-          endOfDay.setHours(23, 59, 59, 999)
-
-          query = query
-            .gte('created_at', startOfDay.toISOString())
-            .lte('created_at', endOfDay.toISOString())
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-        setChats(data)
-      } catch (error) {
-        console.error('Error loading chats:', error)
-        toast.error('Erro ao carregar conversas')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadChats()
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('chat-list-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_conversations'
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setChats(current => [payload.new as Chat, ...current])
-          } else if (payload.eventType === 'UPDATE') {
-            setChats(current => 
-              current.map(chat => 
-                chat.id === payload.new.id ? payload.new as Chat : chat
-              )
-            )
-          } else if (payload.eventType === 'DELETE') {
-            setChats(current => 
-              current.filter(chat => chat.id !== payload.old.id)
-            )
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [filter, selectedDate])
-
-  const filteredChats = chats.filter(chat => 
-    chat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.last_message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.customer_phone?.includes(searchTerm)
-  )
-
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date || null)
-  }
-
-  const handleClearDate = () => {
-    setSelectedDate(null)
-  }
+const ChatSidebar = ({ isMenuOpen, setIsMenuOpen }: ChatSidebarProps) => {
+  const { setTheme, theme } = useTheme()
+  const { signOut } = useAuth()
 
   return (
-    <div className="w-80 border-r flex flex-col bg-card">
-      <ChatSidebarHeader 
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedDate={selectedDate}
-        handleDateSelect={handleDateSelect}
-        handleClearDate={handleClearDate}
-      />
-      
-      <ChatSidebarFilterTabs filter={filter} setFilter={setFilter} />
+    <AnimatePresence>
+      {isMenuOpen && (
+        <motion.div 
+          initial={{ x: -300, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -300, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="bg-card border-r w-72 fixed md:relative z-30 h-full shadow-lg flex flex-col"
+        >
+          <div className="p-4 border-b flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/elia.png" />
+                <AvatarFallback className="bg-primary/10 text-primary">AI</AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="font-semibold text-lg">Social Content Pro</h2>
+                <p className="text-xs text-muted-foreground">Assistente de conteúdo</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-3 border-b">
+            <div className="flex flex-col space-y-2">
+              <Button variant="outline" size="sm" className="justify-start gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <span className="truncate">Minhas Criações</span>
+              </Button>
+              <Button variant="outline" size="sm" className="justify-start gap-2">
+                <Folder className="h-4 w-4 text-amber-500" />
+                <span className="truncate">Briefings</span>
+              </Button>
+              <Button variant="ghost" size="sm" className="justify-start gap-2">
+                <HelpCircle className="h-4 w-4 text-blue-500" />
+                <span>Como usar</span>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex-1"></div>
 
-      {selectedDate && (
-        <DateFilterBanner 
-          selectedDate={selectedDate} 
-          handleClearDate={handleClearDate} 
-        />
+          <div className="mt-auto w-full border-t p-3 space-y-2 bg-muted/20">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full justify-start gap-2"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              {theme === "light" ? (
+                <><Moon className="h-4 w-4" /> Modo Escuro</>
+              ) : (
+                <><Sun className="h-4 w-4" /> Modo Claro</>
+              )}
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="w-full justify-start gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/5"
+              onClick={signOut}
+            >
+              <LogOut className="h-4 w-4" /> Sair
+            </Button>
+          </div>
+        </motion.div>
       )}
+    </AnimatePresence>
+  );
+};
 
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-20">
-            <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        ) : filteredChats.length > 0 ? (
-          filteredChats.map((chat) => (
-            <ChatItem 
-              key={chat.id} 
-              chat={chat} 
-              isSelected={selectedChat?.id === chat.id}
-              onClick={() => onSelectChat(chat)} 
-            />
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground px-4 text-center">
-            <p>Nenhuma conversa encontrada</p>
-            {filter !== 'all' && (
-              <button 
-                onClick={() => setFilter('all')} 
-                className="text-primary text-sm mt-2 hover:underline"
-              >
-                Mostrar todas as conversas
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+export default ChatSidebar;

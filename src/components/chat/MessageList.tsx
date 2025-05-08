@@ -1,53 +1,48 @@
 
 import { useRef, useEffect } from "react"
+import { AnimatePresence } from "framer-motion"
+import { MessageItem } from "./MessageItem"
+import TypingIndicator from "./TypingIndicator"
 
 interface Message {
-  id: string
-  content: string
-  sender_type: 'customer' | 'agent'
-  timestamp: string
-  metadata?: any
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  timestamp: Date;
+  likes?: number;
+  hasHashtags?: boolean;
 }
 
 interface MessageListProps {
-  messages: Message[]
+  messages: Message[];
+  isTyping: boolean;
+  onLikeMessage: (messageId: string) => void;
 }
 
-export default function MessageList({ messages }: MessageListProps) {
+const MessageList = ({ messages, isTyping, onLikeMessage }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, isTyping])
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messages.map((msg) => (
-        <div
-          key={msg.id}
-          className={`flex ${
-            msg.sender_type === 'agent' ? 'justify-end' : 'justify-start'
-          }`}
-        >
-          <div
-            className={`max-w-[70%] rounded-lg px-4 py-2 ${
-              msg.sender_type === 'agent'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted'
-            }`}
-          >
-            <p>{msg.content}</p>
-            <span className="text-xs opacity-70">
-              {new Date(msg.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-        </div>
-      ))}
+    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <AnimatePresence initial={false}>
+        {messages.map((message) => (
+          <MessageItem 
+            key={message.id} 
+            message={message} 
+            onLike={onLikeMessage}
+          />
+        ))}
+      </AnimatePresence>
+      
+      {isTyping && <TypingIndicator />}
+      
       <div ref={messagesEndRef} />
     </div>
-  )
-}
+  );
+};
+
+export default MessageList;
