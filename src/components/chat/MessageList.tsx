@@ -4,22 +4,23 @@ import { AnimatePresence } from "framer-motion"
 import { MessageItem } from "./MessageItem"
 import TypingIndicator from "./TypingIndicator"
 
-interface Message {
+export interface Message {
   id: string;
   content: string;
   role: "user" | "assistant";
   timestamp: Date;
   likes?: number;
   hasHashtags?: boolean;
+  sender_type?: 'customer' | 'agent';
 }
 
 interface MessageListProps {
   messages: Message[];
-  isTyping: boolean;
-  onLikeMessage: (messageId: string) => void;
+  isTyping?: boolean;
+  onLikeMessage?: (messageId: string) => void;
 }
 
-const MessageList = ({ messages, isTyping, onLikeMessage }: MessageListProps) => {
+const MessageList = ({ messages, isTyping = false, onLikeMessage = () => {} }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

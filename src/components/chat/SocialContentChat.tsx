@@ -2,18 +2,9 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/theme/ThemeProvider"
 import { useAuth } from "@/contexts/AuthContext"
-import ChatSidebar from "./ChatSidebar"
-import MessageList from "./MessageList"
+import MessageList, { Message } from "./MessageList"
 import ChatInput from "./ChatInput"
-
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  timestamp: Date;
-  likes?: number;
-  hasHashtags?: boolean;
-}
+import ChatSidebar from "./ChatSidebar"
 
 // Sample responses for demonstration
 const exampleResponses = [
@@ -132,12 +123,12 @@ export default function SocialContentChat() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20">
+    <div className="flex h-full overflow-hidden">
       {/* Left Sidebar */}
       <ChatSidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
       {/* Main Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-background to-muted/20">
         {/* Messages Section */}
         <MessageList 
           messages={messages} 

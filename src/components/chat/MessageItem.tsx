@@ -1,23 +1,17 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bot, Copy, Heart, Save } from "lucide-react"
+import { Bot, Copy, Heart, Save, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
+import { Message } from "./MessageList"
 
 interface MessageProps {
-  message: {
-    id: string;
-    content: string;
-    role: "user" | "assistant";
-    timestamp: Date;
-    likes?: number;
-    hasHashtags?: boolean;
-  };
-  onLike: (messageId: string) => void;
+  message: Message;
+  onLike?: (messageId: string) => void;
 }
 
-export const MessageItem = ({ message, onLike }: MessageProps) => {
+export const MessageItem = ({ message, onLike = () => {} }: MessageProps) => {
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content)
     toast.success("Conteúdo copiado para a área de transferência!")
@@ -27,24 +21,27 @@ export const MessageItem = ({ message, onLike }: MessageProps) => {
     toast.success("Conteúdo salvo nas suas criações!")
   }
 
+  const isUser = message.role === "user" || message.sender_type === "customer"
+  const isAssistant = message.role === "assistant" || message.sender_type === "agent"
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={`flex ${
-        message.role === "user" ? "justify-end" : "justify-start"
+        isUser ? "justify-end" : "justify-start"
       } mb-4`}
     >
       <div
         className={`max-w-[90%] md:max-w-[70%] p-4 rounded-2xl shadow-sm ${
-          message.role === "user"
+          isUser
             ? "bg-primary text-primary-foreground"
             : "bg-card border border-border"
         }`}
       >
         <div className="flex items-start gap-3">
-          {message.role === "assistant" && (
+          {isAssistant && (
             <Avatar className="h-8 w-8 mt-1">
               <AvatarImage src="/elia.png" />
               <AvatarFallback className="bg-primary/10 text-primary">
@@ -54,7 +51,7 @@ export const MessageItem = ({ message, onLike }: MessageProps) => {
           )}
           <div className="space-y-2 flex-1">
             <div className="text-sm font-medium">
-              {message.role === "user" ? "Você" : "Social Content Pro"}
+              {isUser ? "Você" : "Social Content Pro"}
             </div>
             <div className="text-sm whitespace-pre-wrap">
               {message.content}
@@ -64,7 +61,7 @@ export const MessageItem = ({ message, onLike }: MessageProps) => {
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
               
-              {message.role === "assistant" && (
+              {isAssistant && (
                 <div className="flex gap-1">
                   <Button 
                     size="icon" 
@@ -103,7 +100,7 @@ export const MessageItem = ({ message, onLike }: MessageProps) => {
             </div>
             
             {/* For messages with hashtags, highlight them */}
-            {message.role === "assistant" && message.hasHashtags && (
+            {isAssistant && message.hasHashtags && (
               <div className="mt-3 bg-muted/60 p-2 rounded-lg">
                 <p className="text-xs font-medium mb-1">Hashtags sugeridas:</p>
                 <div className="flex flex-wrap gap-1">

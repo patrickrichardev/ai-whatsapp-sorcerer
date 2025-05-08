@@ -6,20 +6,12 @@ import { toast } from "sonner"
 import { sendWhatsAppMessage } from "@/lib/evolution-api"
 import { Chat } from "./ChatLayout"
 import ChatHeader from "./ChatHeader"
-import MessageList from "./MessageList"
+import MessageList, { Message } from "./MessageList"
 import MessageInput from "./MessageInput"
 
 interface ChatMainProps {
   chat: Chat
   onToggleDetails: () => void
-}
-
-interface Message {
-  id: string
-  content: string
-  sender_type: 'customer' | 'agent'
-  timestamp: string
-  metadata?: any
 }
 
 export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
@@ -38,7 +30,17 @@ export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
           .order('timestamp', { ascending: true })
 
         if (error) throw error
-        setMessages(data)
+        
+        // Map database messages to our Message type
+        const formattedMessages = data.map((msg: any): Message => ({
+          id: msg.id,
+          content: msg.content,
+          role: msg.sender_type === 'customer' ? 'user' : 'assistant',
+          timestamp: new Date(msg.timestamp),
+          sender_type: msg.sender_type
+        }))
+        
+        setMessages(formattedMessages)
       } catch (error) {
         console.error('Error loading messages:', error)
         toast.error('Erro ao carregar mensagens')
@@ -59,7 +61,15 @@ export default function ChatMain({ chat, onToggleDetails }: ChatMainProps) {
           filter: `chat_id=eq.${chat.id}`
         },
         (payload) => {
-          setMessages(current => [...current, payload.new as Message])
+          const newMsg = payload.new as any
+          const formattedMsg: Message = {
+            id: newMsg.id,
+            content: newMsg.content,
+            role: newMsg.sender_type === 'customer' ? 'user' : 'assistant',
+            timestamp: new Date(newMsg.timestamp),
+            sender_type: newMsg.sender_type
+          }
+          setMessages(current => [...current, formattedMsg])
         }
       )
       .subscribe()

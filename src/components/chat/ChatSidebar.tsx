@@ -6,13 +6,21 @@ import { FileText, Folder, HelpCircle, LogOut, Moon, Sun } from "lucide-react"
 import { useTheme } from "@/components/theme/ThemeProvider"
 import { useAuth } from "@/contexts/AuthContext"
 import { AnimatePresence, motion } from "framer-motion"
+import { Chat } from "./ChatLayout"
 
 interface ChatSidebarProps {
-  isMenuOpen: boolean;
-  setIsMenuOpen: (isOpen: boolean) => void;
+  isMenuOpen?: boolean;
+  setIsMenuOpen?: (isOpen: boolean) => void;
+  onSelectChat?: (chat: Chat) => void;
+  selectedChat?: Chat | null;
 }
 
-const ChatSidebar = ({ isMenuOpen, setIsMenuOpen }: ChatSidebarProps) => {
+const ChatSidebar = ({ 
+  isMenuOpen = true, 
+  setIsMenuOpen = () => {}, 
+  onSelectChat,
+  selectedChat 
+}: ChatSidebarProps) => {
   const { setTheme, theme } = useTheme()
   const { signOut } = useAuth()
 
