@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { 
@@ -9,15 +8,15 @@ import {
   Moon, 
   Sun, 
   LogOut,
+  Send,
+  MessageSquare,
   Calendar,
   Image,
   Mic,
-  Send,
   Pen,
   Video,
   BadgeCheck,
-  LayoutGrid,
-  MessageSquare
+  LayoutGrid
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme/ThemeProvider"
@@ -127,65 +126,23 @@ export default function ContentAssistant() {
             </div>
             
             <div className="p-3 border-b">
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1 justify-start gap-2">
+              <div className="flex flex-col space-y-2">
+                <Button variant="outline" size="sm" className="justify-start gap-2">
                   <FileText className="h-4 w-4 text-primary" />
                   <span className="truncate">Minhas Criações</span>
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 justify-start gap-2">
+                <Button variant="outline" size="sm" className="justify-start gap-2">
                   <Folder className="h-4 w-4 text-amber-500" />
                   <span className="truncate">Briefings</span>
                 </Button>
+                <Button variant="ghost" size="sm" className="justify-start gap-2">
+                  <HelpCircle className="h-4 w-4 text-blue-500" />
+                  <span>Como usar</span>
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" className="w-full justify-start gap-2 mt-2">
-                <HelpCircle className="h-4 w-4 text-blue-500" />
-                <span>Como usar</span>
-              </Button>
             </div>
             
-            <div className="flex-1 overflow-auto p-3 space-y-3">
-              <div className="rounded-lg bg-gradient-to-r from-primary/20 to-primary/5 p-3 cursor-pointer hover:shadow-md transition-all duration-200 border border-primary/20">
-                <div className="font-medium text-primary flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
-                  <span>Criação de Conteúdo</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Especialista em textos envolventes e estratégias de conteúdo
-                </div>
-              </div>
-              
-              <div className="rounded-lg hover:bg-muted p-3 cursor-pointer transition-all duration-200 border border-transparent hover:border-border">
-                <div className="font-medium flex items-center opacity-70 space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground inline-block"></span>
-                  <span>Marketing Digital</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1 opacity-70">
-                  Em breve
-                </div>
-              </div>
-              
-              <div className="rounded-lg hover:bg-muted p-3 cursor-pointer transition-all duration-200 border border-transparent hover:border-border">
-                <div className="font-medium flex items-center opacity-70 space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground inline-block"></span>
-                  <span>SEO</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1 opacity-70">
-                  Em breve
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="text-sm font-medium mb-2">Sugestões de prompt</h3>
-                <div className="space-y-2 text-xs">
-                  <div className="p-2 bg-muted/50 rounded cursor-pointer hover:bg-muted">
-                    "Crie um post sobre os benefícios do produto X para o Instagram"
-                  </div>
-                  <div className="p-2 bg-muted/50 rounded cursor-pointer hover:bg-muted">
-                    "Preciso de 5 ideias de conteúdo para engajar minha audiência"
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="flex-1"></div>
 
             <div className="mt-auto w-full border-t p-3 space-y-2 bg-muted/20">
               <Button 
