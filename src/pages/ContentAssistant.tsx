@@ -22,7 +22,7 @@ export default function ContentAssistant() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-card border-r w-72 fixed md:relative z-20 h-full shadow-lg"
+            className="bg-card border-r w-72 fixed md:relative z-20 h-full shadow-lg flex flex-col"
           >
             <div className="p-4 border-b flex items-center justify-between">
               <h2 className="font-semibold text-lg">Assistentes IA</h2>
@@ -35,7 +35,8 @@ export default function ContentAssistant() {
                 <PanelLeft className="h-4 w-4" />
               </Button>
             </div>
-            <div className="p-2 space-y-2 mt-2">
+            
+            <div className="p-2 space-y-2 mt-2 flex-1 overflow-auto">
               <div className="rounded-lg bg-gradient-to-r from-primary/20 to-primary/5 p-4 cursor-pointer hover:shadow-md transition-all duration-200 border border-primary/20">
                 <div className="font-medium text-primary flex items-center space-x-2">
                   <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
@@ -67,7 +68,7 @@ export default function ContentAssistant() {
               </div>
             </div>
 
-            <div className="absolute bottom-0 w-full border-t p-3 space-y-2 bg-muted/20">
+            <div className="mt-auto w-full border-t p-3 space-y-2 bg-muted/20">
               <Button 
                 variant="ghost" 
                 size="sm" 
