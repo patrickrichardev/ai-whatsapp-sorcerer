@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react"
-import { useTheme } from "@/components/theme/ThemeProvider"
-import { useAuth } from "@/contexts/AuthContext"
+import { AnimatePresence, motion } from "framer-motion"
+import { PanelLeft, Send, Mic, Image, MessageSquare } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import MessageList, { Message } from "./MessageList"
-import ChatInput from "./ChatInput"
 import ChatSidebar from "./ChatSidebar"
+import ContextPanel from "./ContextPanel"
 
 // Sample responses for demonstration
 const exampleResponses = [
@@ -46,7 +48,24 @@ O que você tem feito para cuidar da sua saúde mental hoje?
   }
 ];
 
-export default function SocialContentChat() {
+// Quick command suggestions
+const quickCommands = [
+  { icon: <MessageSquare className="h-4 w-4" />, label: "Criar legenda para Instagram" },
+  { icon: <Image className="h-4 w-4" />, label: "Ideia de roteiro para Reels" },
+  { icon: <MessageSquare className="h-4 w-4" />, label: "Calendário de postagens" },
+  { icon: <Image className="h-4 w-4" />, label: "Criar carrossel educativo" },
+  { icon: <MessageSquare className="h-4 w-4" />, label: "Sugestão de copy para anúncio" },
+]
+
+interface SocialContentChatProps {
+  isContextOpen: boolean;
+  setIsContextOpen: (isOpen: boolean) => void;
+}
+
+export default function SocialContentChat({
+  isContextOpen,
+  setIsContextOpen
+}: SocialContentChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome-message",
@@ -57,9 +76,12 @@ export default function SocialContentChat() {
   ])
   const [isTyping, setIsTyping] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(true)
+  const [inputValue, setInputValue] = useState("")
 
   // Function to handle sending a new message
   const handleSendMessage = (message: string) => {
+    if (!message.trim()) return
+    
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       content: message,
@@ -68,6 +90,7 @@ export default function SocialContentChat() {
     }
     
     setMessages(prev => [...prev, userMessage])
+    setInputValue("")
     
     // Simulate AI response
     simulateAIResponse(userMessage.content)
@@ -102,6 +125,13 @@ export default function SocialContentChat() {
         : msg
     ))
   }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage(inputValue)
+    }
+  }
   
   // For demonstration, simulate a conversation
   useEffect(() => {
@@ -129,6 +159,24 @@ export default function SocialContentChat() {
 
       {/* Main Chat Area */}
       <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-background to-muted/20">
+        {/* Quick commands */}
+        <div className="px-4 py-3 border-b overflow-x-auto">
+          <div className="flex space-x-2">
+            {quickCommands.map((command, index) => (
+              <Button 
+                key={index} 
+                variant="outline" 
+                size="sm" 
+                className="whitespace-nowrap"
+                onClick={() => setInputValue(command.label)}
+              >
+                {command.icon}
+                <span>{command.label}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      
         {/* Messages Section */}
         <MessageList 
           messages={messages} 
@@ -137,8 +185,58 @@ export default function SocialContentChat() {
         />
         
         {/* Input Box */}
-        <ChatInput onSendMessage={handleSendMessage} />
+        <div className="border-t bg-card/50 backdrop-blur-sm p-4 sticky bottom-0">
+          <div className="max-w-4xl mx-auto flex flex-col">
+            <div className="flex items-end gap-2">
+              <Textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Descreva o conteúdo que você precisa..."
+                className="min-h-[60px] max-h-[200px] flex-1 resize-none overflow-auto rounded-xl"
+                rows={2}
+              />
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-xl h-8 w-8"
+                  onClick={() => !isContextOpen && setIsContextOpen(true)}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => handleSendMessage(inputValue)}
+                  disabled={!inputValue.trim()}
+                  className="rounded-xl h-8 w-8"
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-3">
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Mic className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Image className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                AI Social Content Pro | v1.0
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Context Panel - Right */}
+      {isContextOpen && (
+        <ContextPanel onClose={() => setIsContextOpen(false)} />
+      )}
     </div>
   )
 }

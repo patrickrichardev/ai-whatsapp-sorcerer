@@ -1,25 +1,20 @@
 
 import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { FileText, Folder, HelpCircle, LogOut, Moon, Sun } from "lucide-react"
+import { FileText, Folder, HelpCircle, LogOut, Moon, Sun, PanelLeft } from "lucide-react"
 import { useTheme } from "@/components/theme/ThemeProvider"
 import { useAuth } from "@/contexts/AuthContext"
-import { AnimatePresence, motion } from "framer-motion"
-import { Chat } from "./ChatLayout"
 
 interface ChatSidebarProps {
-  isMenuOpen?: boolean;
-  setIsMenuOpen?: (isOpen: boolean) => void;
-  onSelectChat?: (chat: Chat) => void;
-  selectedChat?: Chat | null;
+  isMenuOpen: boolean;
+  setIsMenuOpen: (isOpen: boolean) => void;
 }
 
 const ChatSidebar = ({ 
   isMenuOpen = true, 
-  setIsMenuOpen = () => {}, 
-  onSelectChat,
-  selectedChat 
+  setIsMenuOpen = () => {},
 }: ChatSidebarProps) => {
   const { setTheme, theme } = useTheme()
   const { signOut } = useAuth()
@@ -32,7 +27,7 @@ const ChatSidebar = ({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -300, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-card border-r w-72 fixed md:relative z-30 h-full shadow-lg flex flex-col"
+          className="bg-card border-r w-72 md:relative z-30 h-full shadow-lg flex flex-col"
         >
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -45,6 +40,14 @@ const ChatSidebar = ({
                 <p className="text-xs text-muted-foreground">Assistente de conteúdo</p>
               </div>
             </div>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <PanelLeft className="h-4 w-4" />
+            </Button>
           </div>
           
           <div className="p-3 border-b">
