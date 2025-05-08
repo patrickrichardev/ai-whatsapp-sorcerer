@@ -1,12 +1,11 @@
 
 import { useState, useEffect } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { PanelLeft, Send, Mic, Image, MessageSquare } from "lucide-react"
+import { AnimatePresence } from "framer-motion"
+import { Send, Mic, Image, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import MessageList, { Message } from "./MessageList"
-import ChatSidebar from "./ChatSidebar"
-import ContextPanel from "./ContextPanel"
+import { cn } from "@/lib/utils"
 
 // Sample responses for demonstration
 const exampleResponses = [
@@ -48,14 +47,29 @@ O que você tem feito para cuidar da sua saúde mental hoje?
   }
 ];
 
-// Quick command suggestions
-const quickCommands = [
-  { icon: <MessageSquare className="h-4 w-4" />, label: "Criar legenda para Instagram" },
-  { icon: <Image className="h-4 w-4" />, label: "Ideia de roteiro para Reels" },
-  { icon: <MessageSquare className="h-4 w-4" />, label: "Calendário de postagens" },
-  { icon: <Image className="h-4 w-4" />, label: "Criar carrossel educativo" },
-  { icon: <MessageSquare className="h-4 w-4" />, label: "Sugestão de copy para anúncio" },
-]
+// Main content suggestions
+const contentSuggestions = [
+  {
+    icon: <MessageSquare className="h-4 w-4" />,
+    title: "Criar legenda para Instagram",
+    command: "criar legenda instagram"
+  },
+  {
+    icon: <Image className="h-4 w-4" />,
+    title: "Ideia de roteiro para Reels",
+    command: "roteiro reels"
+  },
+  {
+    icon: <MessageSquare className="h-4 w-4" />,
+    title: "Calendário de postagens",
+    command: "calendário postagens"
+  },
+  {
+    icon: <Image className="h-4 w-4" />,
+    title: "Sugestão de copy para anúncio",
+    command: "copy anúncio"
+  }
+];
 
 interface SocialContentChatProps {
   isContextOpen: boolean;
@@ -75,7 +89,6 @@ export default function SocialContentChat({
     }
   ])
   const [isTyping, setIsTyping] = useState(false)
-  const [isMenuOpen, setIsMenuOpen] = useState(true)
   const [inputValue, setInputValue] = useState("")
 
   // Function to handle sending a new message
@@ -140,7 +153,7 @@ export default function SocialContentChat({
       setTimeout(() => {
         const userMessage: Message = {
           id: `user-demo-1`,
-          content: "Preciso de uma legenda criativa para um post sobre autocuidado no Instagram",
+          content: "Poderia criar uma legenda para um post sobre dicas de skincare?",
           role: "user",
           timestamp: new Date()
         }
@@ -153,90 +166,81 @@ export default function SocialContentChat({
   }, [])
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Left Sidebar */}
-      <ChatSidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-
-      {/* Main Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-background to-muted/20">
-        {/* Quick commands */}
-        <div className="px-4 py-3 border-b overflow-x-auto">
-          <div className="flex space-x-2">
-            {quickCommands.map((command, index) => (
-              <Button 
-                key={index} 
-                variant="outline" 
-                size="sm" 
-                className="whitespace-nowrap"
-                onClick={() => setInputValue(command.label)}
-              >
-                {command.icon}
-                <span>{command.label}</span>
-              </Button>
-            ))}
-          </div>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Quick commands */}
+      <div className="px-4 py-3 border-b overflow-x-auto">
+        <div className="flex space-x-2">
+          {contentSuggestions.map((command, index) => (
+            <Button 
+              key={index} 
+              variant="outline" 
+              size="sm" 
+              className="whitespace-nowrap"
+              onClick={() => setInputValue(command.command)}
+            >
+              {command.icon}
+              <span>{command.title}</span>
+            </Button>
+          ))}
         </div>
-      
-        {/* Messages Section */}
+      </div>
+    
+      {/* Messages Section */}
+      <div className="flex-1 overflow-hidden">
         <MessageList 
           messages={messages} 
           isTyping={isTyping} 
           onLikeMessage={handleLikeMessage}
         />
-        
-        {/* Input Box */}
-        <div className="border-t bg-card/50 backdrop-blur-sm p-4 sticky bottom-0">
-          <div className="max-w-4xl mx-auto flex flex-col">
-            <div className="flex items-end gap-2">
-              <Textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Descreva o conteúdo que você precisa..."
-                className="min-h-[60px] max-h-[200px] flex-1 resize-none overflow-auto rounded-xl"
-                rows={2}
-              />
-              <div className="flex flex-col gap-2">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="rounded-xl h-8 w-8"
-                  onClick={() => !isContextOpen && setIsContextOpen(true)}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={() => handleSendMessage(inputValue)}
-                  disabled={!inputValue.trim()}
-                  className="rounded-xl h-8 w-8"
-                  size="icon"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+      </div>
+      
+      {/* Input Box */}
+      <div className="border-t bg-card/50 backdrop-blur-sm p-4 sticky bottom-0">
+        <div className="max-w-4xl mx-auto flex flex-col">
+          <div className="flex items-end gap-2">
+            <Textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Descreva o conteúdo que você precisa..."
+              className="min-h-[60px] max-h-[200px] flex-1 resize-none overflow-auto rounded-xl"
+              rows={2}
+            />
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="rounded-xl h-8 w-8"
+                onClick={() => !isContextOpen && setIsContextOpen(true)}
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={() => handleSendMessage(inputValue)}
+                disabled={!inputValue.trim()}
+                className="rounded-xl h-8 w-8"
+                size="icon"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
-            
-            <div className="flex justify-between items-center mt-3">
-              <div className="flex gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Mic className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Image className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                AI Social Content Pro | v1.0
-              </div>
+          </div>
+          
+          <div className="flex justify-between items-center mt-3">
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Mic className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Image className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              AI Social Content Pro | v1.0
             </div>
           </div>
         </div>
       </div>
-
-      {/* Context Panel - Right */}
-      {isContextOpen && (
-        <ContextPanel onClose={() => setIsContextOpen(false)} />
-      )}
     </div>
   )
 }

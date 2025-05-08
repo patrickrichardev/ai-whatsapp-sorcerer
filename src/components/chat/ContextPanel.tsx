@@ -3,6 +3,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { PanelLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 // Business sectors
 const sectors = [
@@ -33,7 +34,7 @@ interface ContextPanelProps {
 }
 
 export default function ContextPanel({ onClose }: ContextPanelProps) {
-  const [selectedSector, setSelectedSector] = useState<string | null>(null)
+  const [selectedSector, setSelectedSector] = useState<string | null>("Saúde")
   const [selectedTone, setSelectedTone] = useState<string | null>(null)
   const [selectedContentType, setSelectedContentType] = useState<string | null>(null)
   const [selectedAudience, setSelectedAudience] = useState<string | null>(null)
@@ -58,17 +59,20 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Sector selection */}
         <div>
-          <label className="text-sm font-medium mb-1 block">Setor</label>
-          <div className="flex flex-wrap gap-1.5">
-            {sectors.slice(0, 6).map(sector => (
+          <label className="text-sm font-medium mb-2 block">Setor</label>
+          <div className="space-y-1">
+            {sectors.slice(0, 8).map(sector => (
               <Button 
                 key={sector}
                 size="sm" 
-                variant={selectedSector === sector ? "default" : "outline"}
-                className="text-xs h-7 px-2"
+                variant="ghost"
+                className={cn(
+                  "justify-start w-full h-8", 
+                  selectedSector === sector ? "bg-primary/10 text-primary" : ""
+                )}
                 onClick={() => setSelectedSector(sector === selectedSector ? null : sector)}
               >
                 {sector}
@@ -79,14 +83,17 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
 
         {/* Voice tone selection */}
         <div>
-          <label className="text-sm font-medium mb-1 block">Tom de voz</label>
-          <div className="flex flex-wrap gap-1.5">
+          <label className="text-sm font-medium mb-2 block">Tom de voz</label>
+          <div className="space-y-1">
             {tones.slice(0, 6).map(tone => (
               <Button 
                 key={tone}
                 size="sm" 
-                variant={selectedTone === tone ? "default" : "outline"}
-                className="text-xs h-7 px-2"
+                variant="ghost"
+                className={cn(
+                  "justify-start w-full h-8", 
+                  selectedTone === tone ? "bg-primary/10 text-primary" : ""
+                )}
                 onClick={() => setSelectedTone(tone === selectedTone ? null : tone)}
               >
                 {tone}
@@ -95,34 +102,19 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
           </div>
         </div>
 
-        {/* Content type selection */}
-        <div>
-          <label className="text-sm font-medium mb-1 block">Tipo de conteúdo</label>
-          <div className="flex flex-wrap gap-1.5">
-            {contentTypes.slice(0, 6).map(type => (
-              <Button 
-                key={type}
-                size="sm" 
-                variant={selectedContentType === type ? "default" : "outline"}
-                className="text-xs h-7 px-2"
-                onClick={() => setSelectedContentType(type === selectedContentType ? null : type)}
-              >
-                {type}
-              </Button>
-            ))}
-          </div>
-        </div>
-
         {/* Target audience selection */}
         <div>
-          <label className="text-sm font-medium mb-1 block">Público-alvo</label>
-          <div className="flex flex-wrap gap-1.5">
+          <label className="text-sm font-medium mb-2 block">Público-alvo</label>
+          <div className="space-y-1">
             {audiences.slice(0, 6).map(audience => (
               <Button 
                 key={audience}
                 size="sm" 
-                variant={selectedAudience === audience ? "default" : "outline"}
-                className="text-xs h-7 px-2"
+                variant="ghost"
+                className={cn(
+                  "justify-start w-full h-8", 
+                  selectedAudience === audience ? "bg-primary/10 text-primary" : ""
+                )}
                 onClick={() => setSelectedAudience(audience === selectedAudience ? null : audience)}
               >
                 {audience}
