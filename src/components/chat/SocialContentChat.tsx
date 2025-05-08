@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence } from "framer-motion"
 import { PanelLeft, Send, Mic, Image, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -75,7 +75,7 @@ export default function SocialContentChat({
     }
   ])
   const [isTyping, setIsTyping] = useState(false)
-  const [isMenuOpen, setIsMenuOpen] = useState(true)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [inputValue, setInputValue] = useState("")
 
   // Function to handle sending a new message
@@ -153,14 +153,14 @@ export default function SocialContentChat({
   }, [])
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Left Sidebar */}
       <ChatSidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
       {/* Main Chat Area */}
       <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-background to-muted/20">
         {/* Quick commands */}
-        <div className="px-4 py-3 border-b overflow-x-auto">
+        <div className="px-4 py-3 border-b overflow-x-auto flex-shrink-0">
           <div className="flex space-x-2">
             {quickCommands.map((command, index) => (
               <Button 
@@ -171,21 +171,23 @@ export default function SocialContentChat({
                 onClick={() => setInputValue(command.label)}
               >
                 {command.icon}
-                <span>{command.label}</span>
+                <span className="ml-1">{command.label}</span>
               </Button>
             ))}
           </div>
         </div>
       
         {/* Messages Section */}
-        <MessageList 
-          messages={messages} 
-          isTyping={isTyping} 
-          onLikeMessage={handleLikeMessage}
-        />
+        <div className="flex-1 overflow-y-auto">
+          <MessageList 
+            messages={messages} 
+            isTyping={isTyping} 
+            onLikeMessage={handleLikeMessage}
+          />
+        </div>
         
         {/* Input Box */}
-        <div className="border-t bg-card/50 backdrop-blur-sm p-4 sticky bottom-0">
+        <div className="border-t bg-card/50 backdrop-blur-sm p-4 sticky bottom-0 flex-shrink-0">
           <div className="max-w-4xl mx-auto flex flex-col">
             <div className="flex items-end gap-2">
               <Textarea

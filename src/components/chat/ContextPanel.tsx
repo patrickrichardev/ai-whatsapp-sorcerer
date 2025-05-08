@@ -44,7 +44,7 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 300, opacity: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="w-64 border-l bg-card/80 backdrop-blur-sm z-20 flex flex-col h-full p-4 overflow-auto"
+      className="w-64 border-l bg-card/80 backdrop-blur-sm z-20 flex flex-col h-full p-4 overflow-auto flex-shrink-0"
     >
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-medium">Configurações</h3>

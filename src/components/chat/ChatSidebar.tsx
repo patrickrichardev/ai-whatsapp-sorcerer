@@ -27,7 +27,7 @@ const ChatSidebar = ({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -300, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-card border-r w-72 md:relative z-30 h-full shadow-lg flex flex-col"
+          className="bg-card border-r w-64 h-full shadow-lg flex flex-col flex-shrink-0 overflow-hidden"
         >
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -67,7 +67,7 @@ const ChatSidebar = ({
             </div>
           </div>
           
-          <div className="flex-1"></div>
+          <div className="flex-1 overflow-y-auto"></div>
 
           <div className="mt-auto w-full border-t p-3 space-y-2 bg-muted/20">
             <Button 
