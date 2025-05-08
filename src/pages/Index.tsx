@@ -1,92 +1,104 @@
 
+import { useNavigate } from "react-router-dom"
+import { useEffect } from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, History, MessageSquare, MessageSquarePlus } from "lucide-react"
-import { useState } from "react"
+import { MessageSquare, Bot, Star } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { StatsCard } from "@/components/dashboard/StatsCard"
-import { ChartFilters } from "@/components/dashboard/ChartFilters"
-import { HistoryChart } from "@/components/dashboard/HistoryChart"
-import { useDashboardData } from "@/hooks/useDashboardData"
-import { useAgents } from "@/hooks/useAgents"
 
 export default function Index() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [selectedAgent, setSelectedAgent] = useState<string>("all")
+  const navigate = useNavigate()
   const { user } = useAuth()
-  const { agents } = useAgents(user?.id)
-  const { stats, historyData, loading } = useDashboardData(user?.id, selectedDate, selectedAgent)
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="space-y-2">
-                <div className="h-4 w-1/3 bg-muted rounded" />
-                <div className="h-8 w-1/2 bg-muted rounded" />
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-        <Card className="animate-pulse">
-          <CardHeader>
-            <div className="h-4 w-1/4 bg-muted rounded" />
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] bg-muted rounded" />
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  
+  useEffect(() => {
+    // Se o usuário já estiver autenticado, redireciona para o assistente
+    if (user) {
+      navigate("/content-assistant")
+    }
+  }, [user, navigate])
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatsCard
-          title="Agentes Ativos"
-          value={stats.activeAgents}
-          description="Total de agentes configurados"
-          icon={Activity}
-        />
-        <StatsCard
-          title="Atendimentos Realizados"
-          value={stats.attendedChats}
-          description="Conversas finalizadas"
-          icon={MessageSquare}
-        />
-        <StatsCard
-          title="Atendimentos Pendentes"
-          value={stats.pendingChats}
-          description="Aguardando atendimento"
-          icon={MessageSquarePlus}
-        />
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold">Assistentes IA Especializados</h1>
+          <p className="text-xl text-muted-foreground">
+            Potencialize sua produtividade com assistentes de IA treinados em áreas específicas
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle>Histórico de Atendimentos</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Quantidade de atendimentos nos últimos 7 dias
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="border-primary/50">
+            <CardHeader className="pb-2">
+              <MessageSquare className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>Criação de Conteúdo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Crie textos persuasivos, posts para redes sociais, emails e mais
               </p>
-            </div>
-            <History className="h-4 w-4 text-muted-foreground" />
+              <Button 
+                className="w-full"
+                onClick={() => navigate("/content-assistant")}
+              >
+                Começar agora
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <Bot className="h-8 w-8 text-muted-foreground mb-2" />
+              <CardTitle>Marketing Digital</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Estratégias de marketing, análise de campanhas e otimização
+              </p>
+              <Button 
+                className="w-full"
+                variant="secondary"
+                disabled
+              >
+                Em breve
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <Star className="h-8 w-8 text-muted-foreground mb-2" />
+              <CardTitle>SEO</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Otimização para mecanismos de busca e palavras-chave
+              </p>
+              <Button 
+                className="w-full"
+                variant="secondary"
+                disabled
+              >
+                Em breve
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="text-center pt-4">
+          <p className="text-sm text-muted-foreground mb-4">
+            Faça login ou registre-se para acessar todos os nossos assistentes
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button onClick={() => navigate("/login")}>
+              Fazer Login
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/login")}>
+              Registrar
+            </Button>
           </div>
-          <ChartFilters
-            agents={agents}
-            selectedAgent={selectedAgent}
-            selectedDate={selectedDate}
-            onAgentChange={setSelectedAgent}
-            onDateChange={(date) => date && setSelectedDate(date)}
-          />
-        </CardHeader>
-        <CardContent>
-          <HistoryChart data={historyData} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

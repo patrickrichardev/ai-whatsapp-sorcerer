@@ -11,6 +11,7 @@ import Login from "./pages/Login"
 import LiveChat from "./pages/LiveChat"
 import SelectAgent from "./pages/SelectAgent"
 import Devices from "./pages/Devices"
+import ContentAssistant from "./pages/ContentAssistant"
 import { AuthProvider } from "./contexts/AuthContext"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import { ThemeProvider } from "./components/theme/ThemeProvider"
@@ -22,6 +23,14 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route
+              path="/content-assistant"
+              element={
+                <ProtectedRoute>
+                  <ContentAssistant />
+                </ProtectedRoute>
+              }
+            />
             <Route
               element={
                 <ProtectedRoute>

@@ -4,13 +4,11 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
-  MessageSquarePlus,
-  MessageSquare,
+  Bot,
   Settings,
   LogOut,
-  MessagesSquare,
-  Bot,
-  Smartphone
+  Smartphone,
+  MessageSquare
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
@@ -18,19 +16,14 @@ import { UserProfileBox } from "./UserProfileBox"
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "Início",
     href: "/",
     icon: LayoutDashboard,
   },
   {
-    name: "Chat Ao Vivo",
-    href: "/live-chat",
-    icon: MessagesSquare,
-  },
-  {
-    name: "Meus Agentes",
-    href: "/create-assistant",
-    icon: Bot,
+    name: "Assistente de Conteúdo",
+    href: "/content-assistant",
+    icon: MessageSquare,
   },
   {
     name: "Dispositivos",
@@ -44,7 +37,7 @@ const navigation = [
   },
 ]
 
-export default function Sidebar() {
+export function Sidebar() {
   const location = useLocation()
   const { signOut } = useAuth()
 
@@ -93,3 +86,5 @@ export default function Sidebar() {
     </div>
   )
 }
+
+export default Sidebar
