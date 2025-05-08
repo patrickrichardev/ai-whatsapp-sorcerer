@@ -4,17 +4,19 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
-  Bot,
   Settings,
   LogOut,
   Smartphone,
-  MessageSquare,
   PenTool
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
 import { UserProfileBox } from "./UserProfileBox"
 import { motion } from "framer-motion"
+
+interface SidebarProps {
+  onNavItemClick?: () => void;
+}
 
 const navigation = [
   {
@@ -40,7 +42,7 @@ const navigation = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ onNavItemClick }: SidebarProps) {
   const location = useLocation()
   const { signOut } = useAuth()
 
@@ -69,7 +71,11 @@ export function Sidebar() {
           {navigation.map((item) => {
             const isActive = isCurrentPath(item.href);
             return (
-              <Link key={item.name} to={item.href}>
+              <Link 
+                key={item.name} 
+                to={item.href} 
+                onClick={onNavItemClick}
+              >
                 <motion.div
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
