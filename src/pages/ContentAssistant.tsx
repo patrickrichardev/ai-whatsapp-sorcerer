@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useTheme } from "@/components/theme/ThemeProvider"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Menu, Share, MoreVertical } from "lucide-react"
 import SocialContentChat from "@/components/chat/SocialContentChat"
 

@@ -10,7 +10,7 @@ import ContextPanel from "./ContextPanel"
 import { cn } from "@/lib/utils"
 
 // Sample welcome message for demonstration
-const welcomeMessage = {
+const welcomeMessage: Message = {
   id: "welcome-message",
   content: `Aqui está o protótipo visual do painel:
 
@@ -154,7 +154,7 @@ export default function SocialContentChat({
           {
             id: "follow-up",
             content: "Gostou do layout? Quer ajustar algum detalhe no protótipo?",
-            role: "assistant",
+            role: "assistant" as const, // Using const assertion to fix type issue
             timestamp: new Date()
           }
         ])
